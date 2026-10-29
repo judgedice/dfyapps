@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { completeAnswers } from '../../apps/workflow-survey/src/test/answers.fixture';
+import { completeAnswers } from '../../apps/survey/src/test/answers.fixture';
 import { createApp } from '../src/app';
 import { FileStore } from '../src/store';
 
@@ -197,5 +197,45 @@ describe('GET /workflow-survey/api/export.csv', () => {
   it('is not served when no password is configured', async () => {
     const open = createApp({ store: new FileStore(root), publicDir: root });
     expect((await request(open).get('/workflow-survey/api/export.csv')).status).toBe(404);
+  });
+});
+
+describe('workfront license survey', () => {
+  const YES = 'Yes, at least one of these';
+  const NO = 'No, none of these';
+  const post = (answers: Record<string, string>) =>
+    request(app).post('/workfront-license/api/responses').send({ respondentId: 'lic1', answers });
+
+  it('saves a one-question Standard response with the license derived on the server', async () => {
+    await post({ doesWork: YES, tracksTime: YES }).expect(201);
+    const dir = path.join(root, 'responses', 'workfront-license');
+    const [name] = await readdir(dir);
+    const saved = JSON.parse(await readFile(path.join(dir, name), 'utf8'));
+    // tracksTime was never shown, so it isn't kept.
+    expect(saved.answers).toEqual({ doesWork: YES });
+    expect(saved.derived).toEqual({ license: 'Standard' });
+  });
+
+  it('requires the follow-up question once it is shown', async () => {
+    const res = await post({ doesWork: NO });
+    expect(res.status).toBe(422);
+    expect(res.body.fields).toHaveProperty('tracksTime');
+  });
+
+  it('keeps license responses apart from workflow responses in the export', async () => {
+    await post({ doesWork: NO, tracksTime: NO, followsWork: NO }).expect(201);
+    await request(app).post('/workflow-survey/api/responses').send(submission()).expect(201);
+
+    const res = await request(app).get('/workfront-license/api/export.csv').auth('dfy', 'secret');
+    const [cols, row, extra] = parseCsv(res.text.slice(1));
+    expect(cols).toEqual(['respondentId', 'submittedAt', 'receivedAt', 'doesWork', 'tracksTime', 'followsWork', 'license']);
+    expect(row[cols.indexOf('license')]).toBe('External');
+    expect(extra).toBeUndefined();
+    expect(res.headers['content-disposition']).toMatch(/filename="workfront-license-/);
+  });
+
+  it('redirects the bare path and keeps the respondent ID', async () => {
+    const res = await request(app).get('/workfront-license?r=lic1');
+    expect(res.headers.location).toBe('/workfront-license/?r=lic1');
   });
 });

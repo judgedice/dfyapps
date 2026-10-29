@@ -1,4 +1,4 @@
-import type { Survey } from '../../apps/workflow-survey/src/survey';
+import type { Survey } from '../../apps/survey/src/survey';
 
 type Cell = string | number | undefined;
 type StoredRecord = {
@@ -60,7 +60,10 @@ export function columnsFor(survey: Survey) {
     }
   }
 
-  cols.push({ header: 'q4_placeCount', get: (r) => asCell(at(r.derived, 'q4_placeCount')) });
+  // Derived values (such as Q4's place count or the recommended license) go last.
+  for (const key of Object.keys(survey.derive?.({}) ?? {})) {
+    cols.push({ header: key, get: (r) => asCell(at(r.derived, key)) });
+  }
   return cols;
 }
 

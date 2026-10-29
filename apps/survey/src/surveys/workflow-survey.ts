@@ -1,76 +1,14 @@
-// Survey definition. Edit questions here; components render them generically.
-
-interface BaseQuestion {
-  /** Stable key used in the submitted `answers` object. */
-  id: string;
-  prompt: string;
-  /** Optional helper text shown under the prompt. */
-  hint?: string;
-}
-
-export interface SingleQuestion extends BaseQuestion {
-  type: 'single';
-  options: string[];
-}
-
-export interface MultiQuestion extends BaseQuestion {
-  type: 'multi';
-  options: string[];
-  /** Option that reveals a free-text field. Its text is saved as `<id>_other`. */
-  otherOption?: string;
-}
-
-export interface MatrixQuestion extends BaseQuestion {
-  type: 'matrix';
-  scale: string[];
-  /** `id` is the key in the answer object; `label` is shown to respondents. */
-  rows: { id: string; label: string }[];
-}
-
-export interface AllocationQuestion extends BaseQuestion {
-  type: 'allocation';
-  /** Inputs must sum to this value (percent). */
-  total: number;
-  items: { id: string; label: string; description?: string }[];
-}
-
-export interface TextQuestion extends BaseQuestion {
-  type: 'text';
-  maxLength: number;
-}
-
-export type Question =
-  | SingleQuestion
-  | MultiQuestion
-  | MatrixQuestion
-  | AllocationQuestion
-  | TextQuestion;
-
-/** Line icons available for section rewards. See src/components/Reward.tsx. */
-export type RewardIcon =
-  | 'thumbsUp'
-  | 'analytics'
-  | 'strategy'
-  | 'workflow'
-  | 'continuous'
-  | 'layers'
-  | 'visibility';
-
-export interface Section {
-  id: string;
-  title: string;
-  questions: Question[];
-  /** Shown briefly the first time a respondent completes this section. */
-  reward?: { icon: RewardIcon; label: string };
-}
-
-export interface Survey {
-  title: string;
-  intro: string;
-  sections: Section[];
-}
+// Task and workflow survey, served at dfy.work/workflow-survey/.
+import type { Survey } from '../survey';
 
 export const survey: Survey = {
+  id: 'workflow-survey',
+  // Kept from the first release so respondents' in-progress answers still load.
+  storageKey: 'task-workflow-survey',
+  derive: (answers) => ({
+    // Number of places selected in Q4.
+    q4_placeCount: Array.isArray(answers.q4) ? answers.q4.length : 0,
+  }),
   title: 'Task and workflow survey',
   intro: 'About 5 minutes. Think about a typical week unless a question says otherwise.',
   sections: [

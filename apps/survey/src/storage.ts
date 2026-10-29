@@ -5,11 +5,11 @@ export interface SavedProgress {
   step: number;
 }
 
-const keyFor = (respondentId: string) => `task-workflow-survey:${respondentId || 'anonymous'}`;
+const keyFor = (prefix: string, respondentId: string) => `${prefix}:${respondentId || 'anonymous'}`;
 
-export function loadProgress(respondentId: string): SavedProgress | null {
+export function loadProgress(prefix: string, respondentId: string): SavedProgress | null {
   try {
-    const raw = window.localStorage.getItem(keyFor(respondentId));
+    const raw = window.localStorage.getItem(keyFor(prefix, respondentId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<SavedProgress>;
     if (!parsed || typeof parsed !== 'object' || typeof parsed.answers !== 'object') return null;
@@ -19,17 +19,17 @@ export function loadProgress(respondentId: string): SavedProgress | null {
   }
 }
 
-export function saveProgress(respondentId: string, progress: SavedProgress): void {
+export function saveProgress(prefix: string, respondentId: string, progress: SavedProgress): void {
   try {
-    window.localStorage.setItem(keyFor(respondentId), JSON.stringify(progress));
+    window.localStorage.setItem(keyFor(prefix, respondentId), JSON.stringify(progress));
   } catch {
     // Storage unavailable (private mode, quota, blocked). The survey still works without it.
   }
 }
 
-export function clearProgress(respondentId: string): void {
+export function clearProgress(prefix: string, respondentId: string): void {
   try {
-    window.localStorage.removeItem(keyFor(respondentId));
+    window.localStorage.removeItem(keyFor(prefix, respondentId));
   } catch {
     // Ignore; nothing to clear.
   }

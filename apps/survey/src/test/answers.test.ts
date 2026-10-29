@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildSubmission, validateQuestion, type Answers } from '../answers';
-import { survey, type AllocationQuestion } from '../survey';
+import type { AllocationQuestion } from '../survey';
+import { survey } from '../surveys/workflow-survey';
 import { completeAnswers } from './fixtures';
 
 const q3 = survey.sections.flatMap((s) => s.questions).find((q) => q.id === 'q3') as AllocationQuestion;

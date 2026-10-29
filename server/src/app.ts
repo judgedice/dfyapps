@@ -1,25 +1,26 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
-import { buildSubmission, validateQuestions, type Answers } from '../../apps/workflow-survey/src/answers';
-import { survey } from '../../apps/workflow-survey/src/survey';
+import { buildSubmission, validateQuestions, visibleSections, type Answers } from '../../apps/survey/src/answers';
+import type { Survey } from '../../apps/survey/src/survey';
+import { surveys as allSurveys } from '../../apps/survey/src/surveys';
 import { toCsv } from './csv';
 import type { ResponseStore } from './store';
 
 export interface AppOptions {
   store: ResponseStore;
-  /** Folder holding each app's built files, e.g. `<publicDir>/workflow-survey/index.html`. */
+  /** Folder holding each survey's built files, e.g. `<publicDir>/workflow-survey/index.html`. */
   publicDir: string;
   /** Password for the CSV export. Export is disabled when unset. */
   exportPassword?: string;
   /** Shown by /health so deploys can confirm the new build is live. */
   version?: string;
-  /** Submissions allowed per client IP per minute. */
+  /** Submissions allowed per client IP per minute, across all surveys. */
   rateLimitPerMinute?: number;
+  /** Surveys to serve, each at `/<id>/`. Defaults to every survey in apps/survey/src/surveys. */
+  surveys?: Survey[];
 }
 
-const APP = 'workflow-survey';
-const BASE = `/${APP}`;
 const MAX_ID_LENGTH = 128;
 
 const securityHeaders = (_req: Request, res: Response, next: NextFunction) => {
@@ -72,28 +73,29 @@ function requirePassword(password: string) {
   };
 }
 
-export function createApp(options: AppOptions) {
-  const { store, publicDir, exportPassword, version = 'dev', rateLimitPerMinute = 10 } = options;
-  const app = express();
-  // Azure Container Apps puts one proxy in front of the app; trust it for the client IP.
-  app.set('trust proxy', 1);
-  app.disable('x-powered-by');
-  app.use(securityHeaders);
+interface MountOptions {
+  store: ResponseStore;
+  publicDir: string;
+  exportPassword?: string;
+  limiter: ReturnType<typeof rateLimit>;
+}
 
-  app.get('/health', (_req, res) => {
-    res.set('Cache-Control', 'no-store').json({ status: 'ok', version });
-  });
+/** Serves one survey at `/<id>/`, with its submit and export endpoints. */
+function mountSurvey(app: express.Express, survey: Survey, options: MountOptions) {
+  const { store, publicDir, exportPassword, limiter } = options;
+  const APP = survey.id;
+  const BASE = `/${APP}`;
 
   // Relative asset paths need the trailing slash. Keep the query string so `?r=` survives.
   app.get(BASE, (req, res, next) => {
-    // Express matches `/workflow-survey/` here too; only redirect the bare path.
+    // Express matches `/<id>/` here too; only redirect the bare path.
     if (!req.originalUrl.startsWith(`${BASE}?`) && req.originalUrl !== BASE) return next();
     res.redirect(301, `${BASE}/${req.originalUrl.slice(BASE.length)}`);
   });
 
   app.post(
     `${BASE}/api/responses`,
-    rateLimit(rateLimitPerMinute),
+    limiter,
     express.json({ limit: '64kb' }),
     async (req, res, next) => {
       try {
@@ -110,8 +112,9 @@ export function createApp(options: AppOptions) {
           return res.status(400).json({ error: 'The submission is not in the expected format.' });
         }
 
+        // Only the questions this respondent was shown are required.
         const errors = validateQuestions(
-          survey.sections.flatMap((s) => s.questions),
+          visibleSections(survey, answers as Answers).flatMap((s) => s.questions),
           answers as Answers,
         );
         if (Object.keys(errors).length > 0) {
@@ -163,6 +166,29 @@ export function createApp(options: AppOptions) {
       },
     }),
   );
+}
+
+export function createApp(options: AppOptions) {
+  const {
+    store,
+    publicDir,
+    exportPassword,
+    version = 'dev',
+    rateLimitPerMinute = 10,
+    surveys: surveyList = Object.values(allSurveys),
+  } = options;
+  const app = express();
+  // Azure Container Apps puts one proxy in front of the app; trust it for the client IP.
+  app.set('trust proxy', 1);
+  app.disable('x-powered-by');
+  app.use(securityHeaders);
+
+  app.get('/health', (_req, res) => {
+    res.set('Cache-Control', 'no-store').json({ status: 'ok', version });
+  });
+
+  const limiter = rateLimit(rateLimitPerMinute);
+  for (const survey of surveyList) mountSurvey(app, survey, { store, publicDir, exportPassword, limiter });
 
   app.use((_req, res) => {
     res.status(404).type('text/plain').send('Not found.');

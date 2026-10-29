@@ -5,8 +5,8 @@
 FROM mcr.microsoft.com/azurelinux/base/nodejs:24 AS build
 WORKDIR /repo
 
-COPY apps/workflow-survey/package.json apps/workflow-survey/package-lock.json apps/workflow-survey/
-RUN npm ci --prefix apps/workflow-survey
+COPY apps/survey/package.json apps/survey/package-lock.json apps/survey/
+RUN npm ci --prefix apps/survey
 COPY server/package.json server/package-lock.json server/
 RUN npm ci --prefix server
 

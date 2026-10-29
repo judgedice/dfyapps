@@ -299,6 +299,37 @@ legend {
   font-size: 0.9375rem;
 }
 
+.question__examples {
+  margin: -4px 0 16px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.question__examples li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--color-heading);
+}
+
+/* Small mineral chevron as the bullet, echoing the DFY mark. */
+.question__examples li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 0.6em;
+  width: 6px;
+  height: 6px;
+  border-top: 2px solid var(--color-accent);
+  border-right: 2px solid var(--color-accent);
+  transform: rotate(45deg);
+}
+
+.question__examples + .question__hint {
+  margin-top: 0;
+}
+
 .question__error {
   display: flex;
   align-items: center;

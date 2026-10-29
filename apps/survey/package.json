@@ -1,5 +1,5 @@
 {
-  "name": "task-workflow-survey",
+  "name": "dfy-surveys",
   "version": "1.0.0",
   "description": "Task and workflow survey (Vite + React + TypeScript)",
   "scripts": {

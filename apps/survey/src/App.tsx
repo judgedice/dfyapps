@@ -3,6 +3,7 @@ import {
   buildSubmission,
   validateQuestion,
   validateQuestions,
+  visibleSections,
   type AnswerValue,
   type Answers,
   type Submission,
@@ -10,7 +11,7 @@ import {
 import { QuestionField, fieldIds } from './components/QuestionField';
 import { REWARD_DURATION, Reward } from './components/Reward';
 import { clearProgress, loadProgress, readRespondentId, saveProgress } from './storage';
-import { survey as defaultSurvey, type Section, type Survey } from './survey';
+import type { Section, Survey } from './survey';
 import wordmark from './assets/dfy-wordmark-gravelgreen.svg';
 import wordmarkOnDark from './assets/dfy-wordmark-light.svg';
 
@@ -20,19 +21,23 @@ type Outcome =
   | { status: 'failed'; submission: Submission; message: string };
 
 interface AppProps {
-  survey?: Survey;
+  survey: Survey;
   /** Overrides `VITE_SUBMIT_URL`; used by tests. */
   submitUrl?: string;
 }
 
-export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
+export default function App({ survey, submitUrl }: AppProps) {
   const respondentId = useMemo(() => readRespondentId(), []);
-  const sections = survey.sections;
-  const lastStep = sections.length - 1;
+  const storageKey = survey.storageKey ?? survey.id;
 
-  const [initial] = useState(() => loadProgress(respondentId));
+  const [initial] = useState(() => loadProgress(storageKey, respondentId));
   const [answers, setAnswers] = useState<Answers>(initial?.answers ?? {});
-  const [step, setStep] = useState(() => Math.min(Math.max(initial?.step ?? 0, 0), lastStep));
+  const [savedStep, setStep] = useState(() => Math.max(initial?.step ?? 0, 0));
+
+  // Sections can depend on earlier answers, so the list (and the last step) can change as people answer.
+  const sections = useMemo(() => visibleSections(survey, answers), [survey, answers]);
+  const lastStep = sections.length - 1;
+  const step = Math.min(savedStep, lastStep);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -51,11 +56,16 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
   }, [reward]);
 
   const section = sections[step];
+  const hasOptional = survey.sections.some((s) => s.questions.some((q) => q.type === 'text'));
   let questionNumber = sections.slice(0, step).reduce((n, s) => n + s.questions.length, 0);
 
   useEffect(() => {
-    if (!outcome) saveProgress(respondentId, { answers, step });
-  }, [respondentId, answers, step, outcome]);
+    document.title = survey.title;
+  }, [survey.title]);
+
+  useEffect(() => {
+    if (!outcome) saveProgress(storageKey, respondentId, { answers, step });
+  }, [storageKey, respondentId, answers, step, outcome]);
 
   // Move focus to the new section heading (or result heading) after navigation.
   useEffect(() => {
@@ -67,6 +77,11 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
     (q) => q.type === 'allocation' && validateQuestion(q, answers) !== null,
   );
   const allocationBlocked = Boolean(blockingAllocation);
+
+  // Later sections can appear once this one is answered, so only offer Submit when it's complete
+  // and nothing follows. Until then the button reads Next, and pressing it shows what's missing.
+  const isFinalStep =
+    step === lastStep && Object.keys(validateQuestions(section.questions, answers)).length === 0;
 
   const handleChange = (key: string, value: AnswerValue | undefined) => {
     const next = { ...answers, [key]: value };
@@ -153,7 +168,7 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
         body: JSON.stringify(submission),
       });
       if (!res.ok) throw new Error(`The server responded with status ${res.status}.`);
-      clearProgress(respondentId);
+      clearProgress(storageKey, respondentId);
       setOutcome({ status: 'sent', submission });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'The request failed.';
@@ -177,27 +192,29 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
       <p className="sr-only" role="status">
         {reward?.label ?? ''}
       </p>
-      <div className="progress">
-        <p className="eyebrow" aria-hidden="true">
-          Section {step + 1} of {sections.length}
-        </p>
-        <div
-          className="progress__track"
-          role="progressbar"
-          aria-label="Survey progress"
-          aria-valuemin={1}
-          aria-valuemax={sections.length}
-          aria-valuenow={step + 1}
-          aria-valuetext={`Section ${step + 1} of ${sections.length}: ${section.title}`}
-        >
-          {sections.map((s, i) => (
-            <span
-              key={s.id}
-              className={`progress__segment${i < step ? ' is-done' : i === step ? ' is-current' : ''}`}
-            />
-          ))}
+      {survey.showProgress !== false && (
+        <div className="progress">
+          <p className="eyebrow" aria-hidden="true">
+            Section {step + 1} of {sections.length}
+          </p>
+          <div
+            className="progress__track"
+            role="progressbar"
+            aria-label="Survey progress"
+            aria-valuemin={1}
+            aria-valuemax={sections.length}
+            aria-valuenow={step + 1}
+            aria-valuetext={`Section ${step + 1} of ${sections.length}: ${section.title}`}
+          >
+            {sections.map((s, i) => (
+              <span
+                key={s.id}
+                className={`progress__segment${i < step ? ' is-done' : i === step ? ' is-current' : ''}`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <form
         className="section"
@@ -205,7 +222,7 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
         aria-labelledby="section-heading"
         onSubmit={(e) => {
           e.preventDefault();
-          if (step === lastStep) void submit();
+          if (isFinalStep) void submit();
           else handleNext();
         }}
       >
@@ -213,7 +230,7 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
           {section.title}
         </h2>
         <span className="rule" aria-hidden="true" />
-        {step === 0 && (
+        {step === 0 && hasOptional && (
           <p className="section__note">All questions are required unless marked optional.</p>
         )}
 
@@ -240,7 +257,7 @@ export default function App({ survey = defaultSurvey, submitUrl }: AppProps) {
           ) : (
             <span />
           )}
-          {step < lastStep ? (
+          {!isFinalStep ? (
             <button
               type="submit"
               className="button button--primary"
