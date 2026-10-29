@@ -18,6 +18,8 @@ echo "Using Container Apps environment: $ENV_NAME"
 
 If the resource group has more than one environment, set `ENV_NAME` to the hub's environment by hand.
 
+On a Mac, the default shell is zsh, where `$APP:l` means "lowercase `$APP`". That's why image names below are written as `${APP}:latest` with braces.
+
 ## 2. Create storage for responses
 
 Each response is saved as one JSON file in a private blob container.
@@ -40,7 +42,7 @@ The Container App needs an image to start from. A push to `main` builds one, or 
 
 ```bash
 az acr build --registry $REGISTRY --resource-group $RG \
-  --image $APP:latest --build-arg BUILD_SHA=initial .
+  --image "${APP}:latest" --build-arg BUILD_SHA=initial .
 ```
 
 ## 4. Create the Container App
@@ -58,7 +60,7 @@ This uses plain options rather than `--yaml`: some versions of the `containerapp
 
 ```bash
 az containerapp create -n $APP -g $RG --environment "$ENV_NAME" \
-  --image $REGISTRY.azurecr.io/$APP:latest \
+  --image "${REGISTRY}.azurecr.io/${APP}:latest" \
   --registry-server $REGISTRY.azurecr.io --registry-username $REGISTRY --registry-password "$ACR_PASSWORD" \
   --ingress external --target-port 8080 \
   --cpu 0.25 --memory 0.5Gi --min-replicas 0 --max-replicas 2 \
