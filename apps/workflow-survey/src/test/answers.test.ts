@@ -32,7 +32,7 @@ describe('buildSubmission', () => {
     expect(result.respondentId).toBe('abc123');
     expect(result.submittedAt).toBe('2026-10-29T12:00:00.000Z');
     expect(result.answers.q1).toEqual({ execute: 'Regularly', review: 'Occasionally', plan: 'Never' });
-    expect(result.answers.q3).toEqual({ doing: 60, preparing: 25, overhead: 15 });
+    expect(result.answers.q3).toEqual({ finding: 10, doing: 50, preparing: 25, overhead: 15 });
     expect(result.answers.q4).toEqual(['Email', 'Chat', 'Other']);
     expect(result.answers.q4_other).toBe('Ticket queue');
     expect(result.answers.q16).toBe('Weekly status report');

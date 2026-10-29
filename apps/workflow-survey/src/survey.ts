@@ -122,6 +122,12 @@ export const survey: Survey = {
           total: 100,
           items: [
             {
+              id: 'finding',
+              label: 'Finding the work',
+              description:
+                'Checking email, chat, trackers, and other places to find out what you need to do',
+            },
+            {
               id: 'doing',
               label: 'Doing the work',
               description: 'The execution, review, or planning itself',
