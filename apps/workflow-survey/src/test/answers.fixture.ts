@@ -5,7 +5,7 @@ export function completeAnswers(): Answers {
   return {
     q1: { execute: 'Regularly', review: 'Occasionally', plan: 'Never' },
     q2: { busiestDay: '6–10', openAtOnce: '11–20' },
-    q3: { doing: 60, preparing: 25, overhead: 15 },
+    q3: { finding: 10, doing: 50, preparing: 25, overhead: 15 },
     q4: ['Email', 'Chat', 'Other'],
     q4_other: 'Ticket queue',
     q5: 'Usually',

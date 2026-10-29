@@ -182,7 +182,8 @@ describe('GET /workflow-survey/api/export.csv', () => {
     const row = Object.fromEntries(cols.map((c, i) => [c, first[i]]));
     expect(row['respondentId']).toBe('abc123');
     expect(row['q1.execute']).toBe('Regularly');
-    expect(row['q3.doing']).toBe('60');
+    expect(row['q3.finding']).toBe('10');
+    expect(row['q3.doing']).toBe('50');
     expect(row['q4']).toBe('Email; Chat; Other');
     expect(row['q4 [Email]']).toBe('1');
     expect(row['q4 [Meeting]']).toBe('0');
