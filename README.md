@@ -5,7 +5,7 @@ Small DFY apps served from `dfy.work`. Each app is a static site under `apps/`, 
 | App | URL | Folder |
 | --- | --- | --- |
 | Task and workflow survey | `https://dfy.work/workflow-survey/` | `apps/survey/src/surveys/workflow-survey.ts` |
-| Which Workfront license do you need? | `https://dfy.work/workfront-license/` | `apps/survey/src/surveys/workfront-license.ts` |
+| How you work | `https://dfy.work/how-you-work/` | `apps/survey/src/surveys/how-you-work.ts` |
 
 ## How it works
 
@@ -34,7 +34,7 @@ EXPORT_PASSWORD=dev npm start
 
 Open `http://localhost:8080/workflow-survey/?r=test1`. Submissions are saved under `data/responses/workflow-survey/`.
 
-To work on a survey with hot reload, run `npm run dev` in `apps/survey/` (add `VITE_SURVEY=workfront-license` for the license survey). Without the server, **Submit** shows the JSON and a **Download JSON** button.
+To work on a survey with hot reload, run `npm run dev` in `apps/survey/` (add `VITE_SURVEY=how-you-work` for the How you work survey). Without the server, **Submit** shows the JSON and a **Download JSON** button.
 
 ## Send the survey
 
@@ -45,19 +45,19 @@ https://dfy.work/workflow-survey/?r=a7k2p9
 ```
 
 ```
-https://dfy.work/workfront-license/?r=a7k2p9
+https://dfy.work/how-you-work/?r=a7k2p9
 ```
 
 Use short, meaningless IDs and keep the ID-to-name list in your own spreadsheet. The ID is saved with each response but never shown on screen. In a spreadsheet, `="https://dfy.work/workflow-survey/?r="&A2` builds the links.
 
 ## Get the responses
 
-**As a spreadsheet:** open `https://dfy.work/<id>/api/export.csv` (for example `workflow-survey` or `workfront-license`) and enter the export password (any user name). You get one row per response and one column per answer, ready for Excel or Google Sheets.
+**As a spreadsheet:** open `https://dfy.work/<id>/api/export.csv` (for example `workflow-survey` or `how-you-work`) and enter the export password (any user name). You get one row per response and one column per answer, ready for Excel or Google Sheets.
 
 - Matrix and allocation questions get a column per row, such as `q1.execute` and `q3.doing`.
 - Multi-select questions get a combined column (`q4`), a column for the **Other** text (`q4_other`), and a 1/0 column per option (`q4 [Email]`) for easy counting.
 - Text that starts like a formula (`=`, `+`, `-`, `@`) is prefixed with `'` so spreadsheets show it as text.
-- The license survey's CSV has a `license` column with Standard, Light, Contributor, or External. Questions someone wasn't asked are blank.
+- The How you work CSV ends with a `license` column: Standard, Light, Contributor, or External.
 - If someone submits twice, both rows appear. Sort by `respondentId` and `receivedAt` to keep the latest.
 
 You can also download the CSV from the command line:

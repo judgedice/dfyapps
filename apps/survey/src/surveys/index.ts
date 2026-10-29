@@ -1,11 +1,11 @@
 import type { Survey } from '../survey';
 import { survey as workflowSurvey } from './workflow-survey';
-import { survey as workfrontLicense } from './workfront-license';
+import { survey as howYouWork } from './how-you-work';
 
 /** Every survey this app can serve, by id (also its URL path). */
 export const surveys: Record<string, Survey> = {
   [workflowSurvey.id]: workflowSurvey,
-  [workfrontLicense.id]: workfrontLicense,
+  [howYouWork.id]: howYouWork,
 };
 
 export const DEFAULT_SURVEY_ID = workflowSurvey.id;

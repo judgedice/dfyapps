@@ -5,7 +5,7 @@ Single-page surveys built with Vite, React, and TypeScript. Respondents see one 
 | Survey | Id and URL path | File |
 | --- | --- | --- |
 | Task and workflow survey | `workflow-survey` | `src/surveys/workflow-survey.ts` |
-| Which Workfront license do you need? | `workfront-license` | `src/surveys/workfront-license.ts` |
+| How you work | `how-you-work` | `src/surveys/how-you-work.ts` |
 
 Set `VITE_SURVEY` to the id to choose which one `npm run dev` or `npm run build` uses. It defaults to `workflow-survey`.
 
@@ -22,7 +22,7 @@ npm run dev
 ```
 
 ```bash
-VITE_SURVEY=workfront-license npm run dev
+VITE_SURVEY=how-you-work npm run dev
 ```
 
 ```bash
@@ -96,17 +96,28 @@ Answer shapes by question type:
 | `allocation` | Object of item ID to a whole number; the values total 100 |
 | `text` | Trimmed string, omitted when left blank |
 
-`derived` holds values each survey computes at submit time with its `derive` function: `q4_placeCount` for the workflow survey, `license` for the license survey.
+`derived` holds values each survey computes at submit time with its `derive` function: `q4_placeCount` for the workflow survey, `license` for How you work.
 
-## Workfront license survey
+## How you work survey
 
-Workfront's licenses nest: External < Contributor < Light < Standard, and each includes everything below it. The survey asks about the most capable license first and stops at the first yes:
+Four sections ask how often someone does everyday activities: their own tasks, planning, requests, and decisions. It never names a tool. Behind the scenes, `licenseFor` in `src/surveys/how-you-work.ts` maps the answers to a work management license tier, saved as `derived.license`. Respondents don't see it.
 
-1. **Doing the work** (creating projects, completing assigned tasks, building forms or reports): yes → Standard.
-2. **Time and sign-off** (timesheets, frequent proof decisions, project timelines): yes → Light.
-3. **Keeping up with work** (submitting requests, approving tasks, following progress): yes → Contributor, no → External.
+The tiers nest (External < Contributor < Light < Standard), and the highest tier any activity needs wins. Any answer other than **Never** counts, except approving files, which needs Light only at **Every week** or **Every month**.
 
-Most people answer one or two questions. The result is saved as `derived.license` and isn't shown to the respondent. `licenseFor` in the survey file holds the logic.
+| Activity | Tier |
+| --- | --- |
+| Mark tasks assigned to you as done | Standard |
+| Create tasks for yourself or others | Standard |
+| Set up new projects | Standard |
+| Respond to requests that others send you | Standard |
+| Log the hours you worked | Light |
+| Approve the hours other people logged | Light |
+| Approve or reject files, weekly or monthly | Light |
+| Approve or reject files, less often | Contributor |
+| Check progress or comment on work others are doing | Contributor |
+| Send a request asking someone else to do work | Contributor |
+| Approve or reject tasks or projects | Contributor |
+| None of these | External |
 
 ## Edit the questions
 

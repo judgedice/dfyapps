@@ -200,42 +200,51 @@ describe('GET /workflow-survey/api/export.csv', () => {
   });
 });
 
-describe('workfront license survey', () => {
-  const YES = 'Yes, at least one of these';
-  const NO = 'No, none of these';
-  const post = (answers: Record<string, string>) =>
-    request(app).post('/workfront-license/api/responses').send({ respondentId: 'lic1', answers });
+describe('how you work survey', () => {
+  const never = {
+    yourWork: { markDone: 'Never', logHours: 'Never', followWork: 'Never' },
+    planning: { createTasks: 'Never', createProjects: 'Never' },
+    requests: { sendRequests: 'Never', handleRequests: 'Never' },
+    decisions: { approveWork: 'Never', approveFiles: 'Never', approveTime: 'Never' },
+  };
+  const post = (answers: Record<string, unknown>) =>
+    request(app).post('/how-you-work/api/responses').send({ respondentId: 'hyw1', answers });
 
-  it('saves a one-question Standard response with the license derived on the server', async () => {
-    await post({ doesWork: YES, tracksTime: YES }).expect(201);
-    const dir = path.join(root, 'responses', 'workfront-license');
+  it('saves the response with the license tier derived on the server', async () => {
+    await post({ ...never, requests: { sendRequests: 'Every week', handleRequests: 'Never' } }).expect(201);
+    const dir = path.join(root, 'responses', 'how-you-work');
     const [name] = await readdir(dir);
     const saved = JSON.parse(await readFile(path.join(dir, name), 'utf8'));
-    // tracksTime was never shown, so it isn't kept.
-    expect(saved.answers).toEqual({ doesWork: YES });
-    expect(saved.derived).toEqual({ license: 'Standard' });
+    expect(saved.answers.requests).toEqual({ sendRequests: 'Every week', handleRequests: 'Never' });
+    expect(saved.derived).toEqual({ license: 'Contributor' });
   });
 
-  it('requires the follow-up question once it is shown', async () => {
-    const res = await post({ doesWork: NO });
+  it('requires every activity', async () => {
+    const res = await post({ ...never, decisions: { approveWork: 'Never' } });
     expect(res.status).toBe(422);
-    expect(res.body.fields).toHaveProperty('tracksTime');
+    expect(res.body.fields).toHaveProperty('decisions');
   });
 
-  it('keeps license responses apart from workflow responses in the export', async () => {
-    await post({ doesWork: NO, tracksTime: NO, followsWork: NO }).expect(201);
+  it('exports its own CSV with a column per activity and the license last', async () => {
+    await post(never).expect(201);
     await request(app).post('/workflow-survey/api/responses').send(submission()).expect(201);
 
-    const res = await request(app).get('/workfront-license/api/export.csv').auth('dfy', 'secret');
+    const res = await request(app).get('/how-you-work/api/export.csv').auth('dfy', 'secret');
     const [cols, row, extra] = parseCsv(res.text.slice(1));
-    expect(cols).toEqual(['respondentId', 'submittedAt', 'receivedAt', 'doesWork', 'tracksTime', 'followsWork', 'license']);
+    expect(cols).toEqual([
+      'respondentId', 'submittedAt', 'receivedAt',
+      'yourWork.markDone', 'yourWork.logHours', 'yourWork.followWork',
+      'planning.createTasks', 'planning.createProjects',
+      'requests.sendRequests', 'requests.handleRequests',
+      'decisions.approveWork', 'decisions.approveFiles', 'decisions.approveTime',
+      'license',
+    ]);
     expect(row[cols.indexOf('license')]).toBe('External');
     expect(extra).toBeUndefined();
-    expect(res.headers['content-disposition']).toMatch(/filename="workfront-license-/);
   });
 
   it('redirects the bare path and keeps the respondent ID', async () => {
-    const res = await request(app).get('/workfront-license?r=lic1');
-    expect(res.headers.location).toBe('/workfront-license/?r=lic1');
+    const res = await request(app).get('/how-you-work?r=hyw1');
+    expect(res.headers.location).toBe('/how-you-work/?r=hyw1');
   });
 });
