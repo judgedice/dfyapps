@@ -29,8 +29,14 @@ export function allocationTotal(q: AllocationQuestion, value: AnswerValue | unde
 export function validateQuestion(q: Question, answers: Answers): string | null {
   const value = answers[q.id];
   switch (q.type) {
-    case 'single':
-      return typeof value === 'string' && value ? null : 'Choose an answer.';
+    case 'single': {
+      if (typeof value !== 'string' || !value) return 'Choose an answer.';
+      if (q.otherOption && value === q.otherOption) {
+        const text = answers[otherKey(q.id)];
+        if (typeof text !== 'string' || !text.trim()) return 'Fill in your answer.';
+      }
+      return null;
+    }
     case 'multi': {
       const selected = Array.isArray(value) ? value : [];
       if (selected.length === 0) return 'Select at least one option.';
@@ -81,9 +87,14 @@ export function buildSubmission(
   for (const q of visibleSections(s, answers).flatMap((section) => section.questions)) {
     const value = answers[q.id];
     switch (q.type) {
-      case 'single':
+      case 'single': {
         if (typeof value === 'string' && value) out[q.id] = value;
+        const text = answers[otherKey(q.id)];
+        if (q.otherOption && value === q.otherOption && typeof text === 'string' && text.trim()) {
+          out[otherKey(q.id)] = text.trim().slice(0, 200);
+        }
         break;
+      }
       case 'multi': {
         const selected = Array.isArray(value) ? q.options.filter((o) => value.includes(o)) : [];
         out[q.id] = selected;

@@ -8,7 +8,14 @@
 // Questions that feed the license are highlighted in DFY orange. Logging hours is a single
 // "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
 // under the decisions grid; it's saved as `usesProof`, and a checked box means at least Light.
-import type { AllocationQuestion, MatrixQuestion, Question, Section, Survey } from '../survey';
+import type {
+  AllocationQuestion,
+  MatrixQuestion,
+  Question,
+  Section,
+  SingleQuestion,
+  Survey,
+} from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -44,6 +51,19 @@ const ITEM_TEXT: Record<string, { label: string; description: string }> = {
   },
 };
 
+// "When information is missing, how long does it take to get it?" (q6) gets broader options here,
+// with a fill-in for anything else.
+const intakeQuestions = questionsOf(workflow, 'intake').map((q): Question =>
+  q.id === 'q6'
+    ? ({
+        ...(q as SingleQuestion),
+        options: ['Same day', 'Days', 'Other', 'It varies'],
+        otherOption: 'Other',
+        otherPrompt: 'How long does it usually take?',
+      } satisfies SingleQuestion)
+    : q,
+);
+
 export const survey: Survey = {
   id: 'work-survey',
   title: 'Work and workflow survey',
@@ -65,7 +85,7 @@ export const survey: Survey = {
       title: 'Planning and decisions',
       reward: { icon: 'workflow', label: 'Nice work' },
       questions: [
-        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work like this?')),
+        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work?')),
         license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
         license({ id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' }),
       ],
@@ -92,8 +112,8 @@ export const survey: Survey = {
           ? { icon: 'pigeon', label: 'Message received' }
           : { icon: 'continuous', label: 'Past halfway' },
       questions: [
-        ...questionsOf(workflow, 'intake'),
-        license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),
+        ...intakeQuestions,
+        license(reworded(only(howYouWork, 'requests'), 'How frequently do you work with requests?')),
       ],
     },
     {

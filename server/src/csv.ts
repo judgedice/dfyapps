@@ -32,6 +32,9 @@ export function columnsFor(survey: Survey) {
       case 'single':
       case 'text':
         cols.push({ header: q.id, get: (r) => asCell(answer(r)) });
+        if (q.type === 'single' && q.otherOption) {
+          cols.push({ header: `${q.id}_other`, get: (r) => asCell(at(r.answers, `${q.id}_other`)) });
+        }
         break;
       case 'checkbox':
         cols.push({ header: q.id, get: (r) => (answer(r) === true ? 'Yes' : answer(r) === false ? 'No' : undefined) });

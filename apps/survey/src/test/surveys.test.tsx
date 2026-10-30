@@ -46,6 +46,33 @@ describe('work survey (combined)', () => {
     expect(workSurvey.sections).toHaveLength(9);
   });
 
+  it('offers Same day, Days, Other (fill in), and It varies for how long missing information takes', () => {
+    const intake = workSurvey.sections.find((s) => s.id === 'intake')!;
+    const q6 = intake.questions.find((q) => q.id === 'q6')!;
+    expect(q6).toMatchObject({ type: 'single', options: ['Same day', 'Days', 'Other', 'It varies'], otherOption: 'Other' });
+  });
+
+  it('requires the fill-in when Other is chosen and submits it', async () => {
+    const { validateQuestion, buildSubmission } = await import('../answers');
+    const q6 = workSurvey.sections.flatMap((s) => s.questions).find((q) => q.id === 'q6')!;
+    expect(validateQuestion(q6, { q6: 'Other' })).toBe('Fill in your answer.');
+    expect(validateQuestion(q6, { q6: 'Other', q6_other: 'About a week' })).toBeNull();
+    expect(validateQuestion(q6, { q6: 'It varies' })).toBeNull();
+    const sub = buildSubmission(workSurvey, 'x', { q6: 'Other', q6_other: '  About a week ' });
+    expect(sub.answers).toMatchObject({ q6: 'Other', q6_other: 'About a week' });
+    expect(buildSubmission(workSurvey, 'x', { q6: 'Days', q6_other: 'stale' }).answers).not.toHaveProperty('q6_other');
+  });
+
+  it('shows the fill-in only when Other is picked', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem('work-survey:all1', JSON.stringify({ answers: {}, step: 4 }));
+    render(<App survey={workSurvey} />);
+    expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Notification and intake');
+    expect(screen.queryByRole('textbox', { name: 'How long does it usually take?' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: 'Other' }));
+    expect(screen.getByRole('textbox', { name: 'How long does it usually take?' })).toBeInTheDocument();
+  });
+
   it.each([
     [['Email', 'Verbal, drive-by, or carrier pigeon'], 'pigeon', 'Message received'],
     [['Email'], 'continuous', 'Past halfway'],
@@ -69,6 +96,17 @@ describe('work survey (combined)', () => {
       ],
       ['overhead', 'Overhead', 'Things like status updates and timeline management'],
     ]);
+  });
+
+  it('asks question 2 as "How often do you plan work?"', () => {
+    expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
+  });
+
+  it('asks question 9 as "How frequently do you work with requests?"', () => {
+    const intake = workSurvey.sections.find((s) => s.id === 'intake')!;
+    expect(intake.questions.find((q) => q.id === 'requests')?.prompt).toBe(
+      'How frequently do you work with requests?',
+    );
   });
 
   it('derives both the place count and the license', () => {
