@@ -69,6 +69,17 @@ describe('work survey (combined)', () => {
   });
 
   it.each([
+    [{}, 'External'],
+    [{ usesProof: true }, 'Light'],
+    [{ usesProof: false }, 'External'],
+    [{ usesProof: true, planning: { createTasks: 'Every week', createProjects: 'Never' } }, 'Standard'],
+  ])('counts "I use Workfront Proof" toward Light: %j → %s', (extra, license) => {
+    const { yourWork: _grid, ...rest } = grids;
+    const answers = { ...rest, yourWork: { markDone: 'Never', followWork: 'Never' }, logsHours: false, ...extra };
+    expect(workSurvey.derive?.(answers).license).toBe(license);
+  });
+
+  it.each([
     [true, 'Light'],
     [false, 'External'],
   ])('counts a checked "I log hours" (%s) toward the license', (logsHours, license) => {
