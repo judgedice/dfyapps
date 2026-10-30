@@ -7,8 +7,15 @@
 //
 // Questions that feed the license are highlighted in DFY orange. Logging hours is a single
 // "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
-// under the decisions grid; it's saved as `usesProof` but doesn't change the license.
-import type { MatrixQuestion, Question, Section, SingleQuestion, Survey } from '../survey';
+// under the decisions grid; it's saved as `usesProof`, and a checked box means at least Light.
+import type {
+  AllocationQuestion,
+  MatrixQuestion,
+  Question,
+  Section,
+  SingleQuestion,
+  Survey,
+} from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -28,6 +35,21 @@ const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
+
+// Time allocation, with this survey's own wording for the last two options. Item ids stay the same
+// as the workflow survey's so the CSV columns line up.
+const timeAllocation = only(workflow, 'time') as AllocationQuestion;
+const ITEM_TEXT: Record<string, { label: string; description: string }> = {
+  preparing: {
+    label: 'Planning the work',
+    description:
+      'Clarifying scope, gathering inputs, organizing your approach, finding assignees, and meetings',
+  },
+  overhead: {
+    label: 'Overhead',
+    description: 'Things like status updates and timeline management',
+  },
+};
 
 // "When information is missing, how long does it take to get it?" (q6) gets broader options here,
 // with a fill-in for anything else.
@@ -75,10 +97,20 @@ export const survey: Survey = {
     {
       ...sectionOf(workflow, 'time'),
       reward: { icon: 'strategy', label: 'Right on target' },
+      questions: [
+        {
+          ...timeAllocation,
+          items: timeAllocation.items.map((item) => ({ ...item, ...ITEM_TEXT[item.id] })),
+        },
+      ],
     },
     {
       ...sectionOf(workflow, 'intake'),
-      reward: { icon: 'continuous', label: 'Past halfway' },
+      // Anyone who gets work by carrier pigeon gets a pigeon.
+      reward: (answers) =>
+        Array.isArray(answers.q4) && answers.q4.some((place) => /carrier pigeon/i.test(place))
+          ? { icon: 'pigeon', label: 'Message received' }
+          : { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...intakeQuestions,
         license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),

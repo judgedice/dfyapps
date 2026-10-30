@@ -72,14 +72,20 @@ export type RewardIcon =
   | 'workflow'
   | 'continuous'
   | 'layers'
-  | 'visibility';
+  | 'visibility'
+  | 'pigeon';
+
+export interface SectionReward {
+  icon: RewardIcon;
+  label: string;
+}
 
 export interface Section {
   id: string;
   title: string;
   questions: Question[];
   /** Shown briefly the first time a respondent completes this section. */
-  reward?: { icon: RewardIcon; label: string };
+  reward?: SectionReward | ((answers: Answers) => SectionReward);
   /** Show this section only when it returns true for the answers so far. Hidden answers aren't submitted. */
   showIf?: (answers: Answers) => boolean;
 }
