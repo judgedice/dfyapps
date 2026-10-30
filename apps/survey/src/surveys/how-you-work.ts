@@ -53,6 +53,8 @@ export function licenseFor(answers: Answers): License | '' {
     const counts = need.onlyIfOften ? OFTEN.includes(value) : value !== NEVER;
     if (counts && RANK.indexOf(need.license) > RANK.indexOf(best)) best = need.license;
   }
+  // The combined survey also asks "I use Workfront Proof" (`usesProof`); proof users need Light.
+  if (answers.usesProof === true && RANK.indexOf(best) < RANK.indexOf('Light')) best = 'Light';
   return best;
 }
 
