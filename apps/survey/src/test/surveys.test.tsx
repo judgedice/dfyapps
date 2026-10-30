@@ -55,6 +55,22 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
+  it('words the time allocation options for this survey', () => {
+    const q = workSurvey.sections[3].questions[0];
+    expect(q.type).toBe('allocation');
+    if (q.type !== 'allocation') return;
+    expect(q.items.map((i) => [i.id, i.label, i.description])).toEqual([
+      ['finding', 'Finding the work', expect.any(String)],
+      ['doing', 'Doing the work', expect.any(String)],
+      [
+        'preparing',
+        'Planning the work',
+        'Clarifying scope, gathering inputs, organizing your approach, finding assignees, and meetings',
+      ],
+      ['overhead', 'Overhead', 'Things like status updates and timeline management'],
+    ]);
+  });
+
   it('derives both the place count and the license', () => {
     const { q1: _dropped, ...rest } = completeAnswers();
     expect(workSurvey.derive?.({ ...rest, ...grids })).toEqual({ q4_placeCount: 3, license: 'Light' });
@@ -75,6 +91,17 @@ describe('work survey (combined)', () => {
     const ids = workSurvey.sections[1].questions.map((q) => q.id);
     expect(ids).toEqual(['planning', 'decisions', 'usesProof']);
     expect(workSurvey.sections[1].questions[2]).toMatchObject({ type: 'checkbox', prompt: 'I use Workfront Proof' });
+  });
+
+  it.each([
+    [{}, 'External'],
+    [{ usesProof: true }, 'Light'],
+    [{ usesProof: false }, 'External'],
+    [{ usesProof: true, planning: { createTasks: 'Every week', createProjects: 'Never' } }, 'Standard'],
+  ])('counts "I use Workfront Proof" toward Light: %j → %s', (extra, license) => {
+    const { yourWork: _grid, ...rest } = grids;
+    const answers = { ...rest, yourWork: { markDone: 'Never', followWork: 'Never' }, logsHours: false, ...extra };
+    expect(workSurvey.derive?.(answers).license).toBe(license);
   });
 
   it.each([

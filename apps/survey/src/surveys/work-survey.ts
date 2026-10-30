@@ -7,8 +7,8 @@
 //
 // Questions that feed the license are highlighted in DFY orange. Logging hours is a single
 // "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
-// under the decisions grid; it's saved as `usesProof` but doesn't change the license.
-import type { MatrixQuestion, Question, Section, Survey } from '../survey';
+// under the decisions grid; it's saved as `usesProof`, and a checked box means at least Light.
+import type { AllocationQuestion, MatrixQuestion, Question, Section, Survey } from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -28,6 +28,21 @@ const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
+
+// Time allocation, with this survey's own wording for the last two options. Item ids stay the same
+// as the workflow survey's so the CSV columns line up.
+const timeAllocation = only(workflow, 'time') as AllocationQuestion;
+const ITEM_TEXT: Record<string, { label: string; description: string }> = {
+  preparing: {
+    label: 'Planning the work',
+    description:
+      'Clarifying scope, gathering inputs, organizing your approach, finding assignees, and meetings',
+  },
+  overhead: {
+    label: 'Overhead',
+    description: 'Things like status updates and timeline management',
+  },
+};
 
 export const survey: Survey = {
   id: 'work-survey',
@@ -62,6 +77,12 @@ export const survey: Survey = {
     {
       ...sectionOf(workflow, 'time'),
       reward: { icon: 'strategy', label: 'Right on target' },
+      questions: [
+        {
+          ...timeAllocation,
+          items: timeAllocation.items.map((item) => ({ ...item, ...ITEM_TEXT[item.id] })),
+        },
+      ],
     },
     {
       ...sectionOf(workflow, 'intake'),
