@@ -147,6 +147,14 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
+  it('asks question 13 about a typical task/document', () => {
+    const numbered = workSurvey.sections.flatMap((s) => s.questions).filter((q) => q.type !== 'checkbox');
+    expect(numbered[12]).toMatchObject({
+      id: 'q10',
+      prompt: 'How many rounds of review and approval does a typical task/document go through?',
+    });
+  });
+
   it('words the duration questions to the respondent', () => {
     const duration = workSurvey.sections.find((s) => s.id === 'duration')!;
     expect(duration.questions.map((q) => q.prompt)).toEqual([

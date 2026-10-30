@@ -168,6 +168,11 @@ export const survey: Survey = {
     {
       ...sectionOf(workflow, 'rework'),
       reward: { icon: 'visibility', label: 'Almost there' },
+      questions: questionsOf(workflow, 'rework').map((q) =>
+        q.id === 'q10'
+          ? reworded(q, 'How many rounds of review and approval does a typical task/document go through?')
+          : q,
+      ),
     },
     {
       ...sectionOf(workflow, 'assets'),
