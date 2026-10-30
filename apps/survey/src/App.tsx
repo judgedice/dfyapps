@@ -11,7 +11,7 @@ import {
 import { QuestionField, fieldIds } from './components/QuestionField';
 import { REWARD_DURATION, Reward } from './components/Reward';
 import { clearProgress, loadProgress, readRespondentId, saveProgress } from './storage';
-import { isNumbered, type Section, type Survey } from './survey';
+import { isNumbered, type SectionReward, type Survey } from './survey';
 import wordmark from './assets/dfy-wordmark-gravelgreen.svg';
 import wordmarkOnDark from './assets/dfy-wordmark-light.svg';
 
@@ -46,7 +46,7 @@ export default function App({ survey, submitUrl }: AppProps) {
   const hasNavigated = useRef(false);
 
   // Section rewards show once per section per visit; `key` restarts the animation.
-  const [reward, setReward] = useState<(NonNullable<Section['reward']> & { key: number }) | null>(null);
+  const [reward, setReward] = useState<(SectionReward & { key: number }) | null>(null);
   const rewarded = useRef(new Set<string>());
 
   useEffect(() => {
@@ -134,7 +134,9 @@ export default function App({ survey, submitUrl }: AppProps) {
     if (!validateCurrent()) return;
     if (section.reward && !rewarded.current.has(section.id)) {
       rewarded.current.add(section.id);
-      setReward({ ...section.reward, key: Date.now() });
+      // A reward can depend on the answers, e.g. a pigeon for people who chose carrier pigeon.
+      const earned = typeof section.reward === 'function' ? section.reward(answers) : section.reward;
+      setReward({ ...earned, key: Date.now() });
     }
     goTo(step + 1);
   };

@@ -86,7 +86,11 @@ export const survey: Survey = {
     },
     {
       ...sectionOf(workflow, 'intake'),
-      reward: { icon: 'continuous', label: 'Past halfway' },
+      // Anyone who gets work by carrier pigeon gets a pigeon.
+      reward: (answers) =>
+        Array.isArray(answers.q4) && answers.q4.some((place) => /carrier pigeon/i.test(place))
+          ? { icon: 'pigeon', label: 'Message received' }
+          : { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...questionsOf(workflow, 'intake'),
         license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),

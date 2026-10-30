@@ -48,6 +48,19 @@ const icons: Record<RewardIcon, ReactNode> = {
       <path d="m2 12 10 5 10-5" />
     </>
   ),
+  // A carrier pigeon with a note in its beak. The wing flaps as it flies in.
+  pigeon: (
+    <>
+      <circle cx="15.4" cy="6" r="2.1" />
+      <circle cx="16" cy="5.7" r=".45" fill="currentColor" stroke="none" />
+      <path d="M17.4 5.6 19.3 6.5 17.3 6.9" />
+      <path d="M13.6 7.4C10.8 8 8 9.7 6.2 12L2 13.6l2.6 1.5c1.4 2.5 4.8 3.5 7.9 2.5 3.1-1 4.6-3.6 4.2-6.6-.2-1.4.1-2.5.6-3.1" />
+      <path className="reward__wing" d="M7.6 12.6c2-1.8 5-1.7 6.5.3-2.5 1.7-5 1.5-6.5-.3z" />
+      <path d="M10.6 17.9v2.6M13.2 17.3v2.8" />
+      <rect x="18.9" y="7.3" width="4.2" height="3" rx=".5" />
+      <path d="m19.1 7.6 2 1.4 1.9-1.4" />
+    </>
+  ),
   visibility: (
     <>
       <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -68,7 +81,7 @@ const SPARKS = 8;
  */
 export function Reward({ icon, label }: { icon: RewardIcon; label: string }) {
   return (
-    <div className="reward" aria-hidden="true">
+    <div className={`reward reward--${icon}`} aria-hidden="true">
       <div className="reward__badge">
         <span className="reward__ring" />
         {Array.from({ length: SPARKS }, (_, i) => (
