@@ -61,6 +61,25 @@ const icons: Record<RewardIcon, ReactNode> = {
       <path d="m19.1 7.6 2 1.4 1.9-1.4" />
     </>
   ),
+  // The hand sweeps once around the clock face.
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path className="reward__hand" d="M12 7v5l3.2 2" />
+    </>
+  ),
+  // A bee that buzzes in place.
+  bee: (
+    <>
+      <ellipse cx="10.5" cy="14.5" rx="6" ry="4.3" />
+      <path d="M8.6 10.5v8M12 10.3v8.4" />
+      <circle cx="18.3" cy="13.4" r="2" />
+      <path d="M19.2 11.6l1.3-2.4M17.6 11.5l-.4-2.5" />
+      <path d="M4.5 14.6 2.4 15" />
+      <path d="M9.6 10.3C7 9.5 5.8 7 7.2 5.6s4 .3 4.2 3.2" />
+      <path d="M11.6 10.2c.4-2.8 2.4-4.5 4.1-3.6s1 3.6-1.6 4.6" />
+    </>
+  ),
   visibility: (
     <>
       <rect x="2" y="3" width="20" height="14" rx="2" />

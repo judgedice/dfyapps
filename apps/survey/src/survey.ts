@@ -73,7 +73,9 @@ export type RewardIcon =
   | 'continuous'
   | 'layers'
   | 'visibility'
-  | 'pigeon';
+  | 'pigeon'
+  | 'clock'
+  | 'bee';
 
 export interface SectionReward {
   icon: RewardIcon;

@@ -74,7 +74,14 @@ export const survey: Survey = {
     {
       id: 'your-work',
       title: 'Your own work',
-      reward: { icon: 'thumbsUp', label: 'Great job' },
+      // Timekeeper for people who log hours, Busy bee for weekly on both activities, otherwise thanks.
+      reward: (answers) => {
+        if (answers.logsHours === true) return { icon: 'clock', label: 'Timekeeper' };
+        const grid = (answers.yourWork ?? {}) as Record<string, string>;
+        const rows = yourWork.rows.filter((r) => r.id !== 'logHours');
+        if (rows.every((r) => grid[r.id] === 'Every week')) return { icon: 'bee', label: 'Busy bee' };
+        return { icon: 'thumbsUp', label: 'Hey, thanks' };
+      },
       questions: [
         license({ ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') }),
         license({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' }),

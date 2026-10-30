@@ -1094,6 +1094,41 @@ textarea {
   animation: reward-flap 180ms ease-in-out 60ms 4 alternate;
 }
 
+/* The bee is drawn larger like the pigeon and buzzes in place. */
+.reward--bee .reward__icon {
+  width: 60px;
+  height: 60px;
+  margin: -6px 0;
+  animation:
+    reward-icon 360ms var(--ease) 60ms both,
+    reward-buzz 90ms linear 400ms 6 alternate;
+}
+
+/* The clock's hand sweeps once around. */
+.reward__hand {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  animation: reward-sweep 900ms var(--ease) 200ms both;
+}
+
+@keyframes reward-buzz {
+  from {
+    transform: translate(-1.5px, 0.5px);
+  }
+  to {
+    transform: translate(1.5px, -0.5px);
+  }
+}
+
+@keyframes reward-sweep {
+  from {
+    transform: rotate(-360deg);
+  }
+  to {
+    transform: none;
+  }
+}
+
 @keyframes reward-fly-in {
   from {
     opacity: 0;
@@ -1187,6 +1222,8 @@ textarea {
   .reward__icon,
   .reward__label,
   .reward--pigeon .reward__icon,
+  .reward--bee .reward__icon,
+  .reward__hand,
   .reward__wing {
     animation: none;
   }

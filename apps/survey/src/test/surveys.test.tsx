@@ -106,6 +106,19 @@ describe('work survey (combined)', () => {
     });
   });
 
+  it.each([
+    [{ logsHours: true, yourWork: { markDone: 'Every week', followWork: 'Every week' } }, 'clock', 'Timekeeper'],
+    [{ logsHours: true, yourWork: { markDone: 'Never', followWork: 'Never' } }, 'clock', 'Timekeeper'],
+    [{ logsHours: false, yourWork: { markDone: 'Every week', followWork: 'Every week' } }, 'bee', 'Busy bee'],
+    [{ yourWork: { markDone: 'Every week', followWork: 'Every week' } }, 'bee', 'Busy bee'],
+    [{ logsHours: false, yourWork: { markDone: 'Every week', followWork: 'Every month' } }, 'thumbsUp', 'Hey, thanks'],
+    [{ yourWork: { markDone: 'Never', followWork: 'Never' } }, 'thumbsUp', 'Hey, thanks'],
+  ])('celebrates section 1 based on the answers: %j', (answers, icon, label) => {
+    const first = workSurvey.sections[0];
+    const reward = typeof first.reward === 'function' ? first.reward(answers) : first.reward;
+    expect(reward).toEqual({ icon, label });
+  });
+
   it('asks question 2 as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });
@@ -185,6 +198,6 @@ describe('work survey (combined)', () => {
     }
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Planning and decisions');
-    expect(screen.getByText('Great job', { selector: '[role="status"]' })).toBeInTheDocument();
+    expect(screen.getByText('Hey, thanks', { selector: '[role="status"]' })).toBeInTheDocument();
   });
 });
