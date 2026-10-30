@@ -11,7 +11,7 @@ import {
 import { QuestionField, fieldIds } from './components/QuestionField';
 import { REWARD_DURATION, Reward } from './components/Reward';
 import { clearProgress, loadProgress, readRespondentId, saveProgress } from './storage';
-import type { Section, Survey } from './survey';
+import { isNumbered, type Section, type Survey } from './survey';
 import wordmark from './assets/dfy-wordmark-gravelgreen.svg';
 import wordmarkOnDark from './assets/dfy-wordmark-light.svg';
 
@@ -57,7 +57,9 @@ export default function App({ survey, submitUrl }: AppProps) {
 
   const section = sections[step];
   const hasOptional = survey.sections.some((s) => s.questions.some((q) => q.type === 'text'));
-  let questionNumber = sections.slice(0, step).reduce((n, s) => n + s.questions.length, 0);
+  let questionNumber = sections
+    .slice(0, step)
+    .reduce((n, s) => n + s.questions.filter(isNumbered).length, 0);
 
   useEffect(() => {
     document.title = survey.title;
@@ -235,7 +237,7 @@ export default function App({ survey, submitUrl }: AppProps) {
         )}
 
         {section.questions.map((q) => {
-          questionNumber += 1;
+          if (isNumbered(q)) questionNumber += 1;
           return (
             <QuestionField
               key={q.id}

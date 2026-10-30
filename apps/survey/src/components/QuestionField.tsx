@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import type { AnswerValue, Answers } from '../answers';
 import type { Question } from '../survey';
 import { AllocationField } from './AllocationField';
+import { CheckboxField } from './CheckboxField';
 import { MatrixField } from './MatrixField';
 import { MultiField } from './MultiField';
 import { SingleField } from './SingleField';
@@ -26,6 +27,8 @@ export function QuestionField(props: FieldProps<Question>) {
       return <MatrixField {...props} question={question} />;
     case 'allocation':
       return <AllocationField {...props} question={question} />;
+    case 'checkbox':
+      return <CheckboxField {...props} question={question} />;
     case 'text':
       return <TextField {...props} question={question} />;
   }
@@ -66,7 +69,9 @@ export function QuestionFrame({ question, number, error, optional, role, footer,
   return (
     <fieldset
       id={ids.field}
-      className={`question question--${question.type}${error ? ' has-error' : ''}`}
+      className={`question question--${question.type}${question.highlight ? ' question--highlight' : ''}${
+        error ? ' has-error' : ''
+      }`}
       role={role}
       aria-required={role === 'radiogroup' ? true : undefined}
       aria-invalid={role === 'radiogroup' && error ? true : undefined}

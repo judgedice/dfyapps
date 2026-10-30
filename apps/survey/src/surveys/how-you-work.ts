@@ -31,11 +31,24 @@ const NEEDS: { question: string; row: string; license: License; onlyIfOften?: bo
 
 const RANK: License[] = ['External', 'Contributor', 'Light', 'Standard'];
 
+/**
+ * How often the respondent does an activity. The combined survey asks about logging hours with a
+ * yes-or-no checkbox (`logsHours`) instead of a grid row; a checked box counts as weekly.
+ */
+function frequency(answers: Answers, question: string, row: string): string | undefined {
+  const fromGrid = (answers[question] as MatrixAnswer | undefined)?.[row];
+  if (fromGrid) return fromGrid;
+  if (row === 'logHours' && typeof answers.logsHours === 'boolean') {
+    return answers.logsHours ? OFTEN[0] : NEVER;
+  }
+  return undefined;
+}
+
 /** The tier the answers point to, or '' while any activity is unanswered. */
 export function licenseFor(answers: Answers): License | '' {
   let best: License = 'External';
   for (const need of NEEDS) {
-    const value = (answers[need.question] as MatrixAnswer | undefined)?.[need.row];
+    const value = frequency(answers, need.question, need.row);
     if (!value) return '';
     const counts = need.onlyIfOften ? OFTEN.includes(value) : value !== NEVER;
     if (counts && RANK.indexOf(need.license) > RANK.indexOf(best)) best = need.license;

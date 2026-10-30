@@ -124,6 +124,8 @@ The tiers nest (External < Contributor < Light < Standard), and the highest tier
 
 Both surveys in one, nine sections. The How you work activity grids replace the workflow survey's first section (execute, review, plan), and the request activities join the intake section. It reuses the question definitions from both survey files, so edits there carry over. It saves both `q4_placeCount` and `license`.
 
+The questions that feed the license are highlighted in DFY orange (`highlight: true`). In the first section, logging hours is a single **I log hours** checkbox above **Next** instead of a grid row. It's saved as `logsHours` (true or false), and a checked box counts as weekly for the license.
+
 Every survey shows a reward between pages; a test fails if a section other than the last one has no `reward`.
 
 ## Edit the questions
@@ -136,6 +138,8 @@ Each survey's content lives in its own file in `src/surveys/`. Components render
 - **Add help text:** set `hint` on any question, or `examples` for a bulleted list under the prompt.
 - **Show a section only sometimes:** set `showIf` to a function of the answers so far. Answers to hidden sections aren't submitted or required.
 - **Hide the progress bar:** set `showProgress: false` on the survey.
+- **Highlight a question in DFY orange:** set `highlight: true`.
+- **Add a single checkbox:** use type `checkbox`, with `prompt` as its label. It's optional, unnumbered, and saved as true or false.
 - **Rename a matrix row or allocation item:** change its `label`. Keep its `id` stable so the data stays comparable.
 
 Every question except `text` is required. A `text` question's character limit is set by `maxLength`.

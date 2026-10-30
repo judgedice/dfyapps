@@ -254,7 +254,8 @@ describe('work survey (combined)', () => {
     const { q1: _dropped, ...rest } = completeAnswers();
     const answers = {
       ...rest,
-      yourWork: { markDone: 'Every week', logHours: 'Never', followWork: 'Never' },
+      yourWork: { markDone: 'Every week', followWork: 'Never' },
+      logsHours: true,
       planning: { createTasks: 'Never', createProjects: 'Never' },
       requests: { sendRequests: 'Never', handleRequests: 'Never' },
       decisions: { approveWork: 'Never', approveFiles: 'Never', approveTime: 'Never' },
@@ -267,6 +268,8 @@ describe('work survey (combined)', () => {
     expect(cols).toContain('requests.handleRequests');
     expect(cols).toContain('q3.finding');
     expect(cols).not.toContain('q1.execute');
+    expect(cols).not.toContain('yourWork.logHours');
+    expect(row[cols.indexOf('logsHours')]).toBe('Yes');
     expect(cols.slice(-2)).toEqual(['q4_placeCount', 'license']);
     expect(row.slice(-2)).toEqual(['3', 'Standard']);
   });

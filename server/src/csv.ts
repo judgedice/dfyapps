@@ -33,6 +33,9 @@ export function columnsFor(survey: Survey) {
       case 'text':
         cols.push({ header: q.id, get: (r) => asCell(answer(r)) });
         break;
+      case 'checkbox':
+        cols.push({ header: q.id, get: (r) => (answer(r) === true ? 'Yes' : answer(r) === false ? 'No' : undefined) });
+        break;
       case 'matrix':
         for (const row of q.rows) {
           cols.push({ header: `${q.id}.${row.id}`, get: (r) => asCell(at(answer(r), row.id)) });

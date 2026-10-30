@@ -4,7 +4,10 @@
 // review, plan), and its request questions join the intake section. Questions are reused from
 // both surveys, so edits there carry over here. Saves both surveys' derived values:
 // `q4_placeCount` and `license`.
-import type { Question, Section, Survey } from '../survey';
+//
+// Questions that feed the license are highlighted in DFY orange. Logging hours is a single
+// "I log hours" checkbox above Next rather than a grid row.
+import type { MatrixQuestion, Question, Section, Survey } from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -20,6 +23,11 @@ const questionsOf = (s: Survey, id: string): Question[] => sectionOf(s, id).ques
 const reworded = (q: Question, prompt: string): Question => ({ ...q, prompt });
 const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 
+/** Marks a question as feeding the license, shown in DFY orange. */
+const license = (q: Question): Question => ({ ...q, highlight: true });
+
+const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
+
 export const survey: Survey = {
   id: 'work-survey',
   title: 'Work and workflow survey',
@@ -31,15 +39,18 @@ export const survey: Survey = {
       id: 'your-work',
       title: 'Your own work',
       reward: { icon: 'thumbsUp', label: 'Great job' },
-      questions: questionsOf(howYouWork, 'your-work'),
+      questions: [
+        license({ ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') }),
+        license({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' }),
+      ],
     },
     {
       id: 'planning-decisions',
       title: 'Planning and decisions',
       reward: { icon: 'workflow', label: 'Nice work' },
       questions: [
-        reworded(only(howYouWork, 'planning'), 'How often do you plan work like this?'),
-        reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?'),
+        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work like this?')),
+        license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
       ],
     },
     {
@@ -55,7 +66,7 @@ export const survey: Survey = {
       reward: { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...questionsOf(workflow, 'intake'),
-        reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?'),
+        license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),
       ],
     },
     {

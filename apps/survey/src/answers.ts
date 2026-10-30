@@ -2,7 +2,7 @@ import type { AllocationQuestion, Question, Section, Survey } from './survey';
 
 export type MatrixAnswer = Record<string, string>;
 export type AllocationAnswer = Record<string, number>;
-export type AnswerValue = string | string[] | MatrixAnswer | AllocationAnswer;
+export type AnswerValue = string | string[] | boolean | MatrixAnswer | AllocationAnswer;
 export type Answers = Record<string, AnswerValue | undefined>;
 
 export interface Submission {
@@ -55,6 +55,7 @@ export function validateQuestion(q: Question, answers: Answers): string | null {
       const total = allocationTotal(q, value);
       return total === q.total ? null : `Your total is ${total}%. It must equal ${q.total}%.`;
     }
+    case 'checkbox':
     case 'text':
       return null;
   }
@@ -106,6 +107,9 @@ export function buildSubmission(
         out[q.id] = items;
         break;
       }
+      case 'checkbox':
+        out[q.id] = value === true;
+        break;
       case 'text':
         if (typeof value === 'string' && value.trim()) out[q.id] = value.trim().slice(0, q.maxLength);
         break;
