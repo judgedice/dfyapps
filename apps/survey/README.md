@@ -124,7 +124,7 @@ The tiers nest (External < Contributor < Light < Standard), and the highest tier
 
 Both surveys in one, nine sections. The How you work activity grids replace the workflow survey's first section (execute, review, plan), and the request activities join the intake section. It reuses the question definitions from both survey files, so edits there carry over. It saves both `q4_placeCount` and `license`.
 
-The questions that feed the license are highlighted in DFY orange (`highlight: true`). In the first section, logging hours is a single **I log hours** checkbox above **Next** instead of a grid row. It's saved as `logsHours` (true or false), and a checked box counts as weekly for the license. Under the decisions grid, an **I use Workfront Proof** checkbox is saved as `usesProof`; checking it means at least Light.
+In the first section, logging hours is a single **I log hours** checkbox above **Next** instead of a grid row. It's saved as `logsHours` (true or false), and a checked box counts as weekly for the license. Under the decisions grid, an **I use Workfront Proof** checkbox is saved as `usesProof`; checking it means at least Light.
 
 After the intake page, anyone who chose carrier pigeon in that section's first question gets a carrier pigeon with a note in its beak ("Message received") instead of the usual reward. A section's `reward` can be a function of the answers for cases like this.
 
