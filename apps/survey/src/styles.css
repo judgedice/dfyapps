@@ -1080,6 +1080,40 @@ textarea {
   background: var(--color-accent);
 }
 
+/* The pigeon is drawn a little larger so the note in its beak reads. It flies in and flaps. */
+.reward--pigeon .reward__icon {
+  width: 64px;
+  height: 64px;
+  margin: -8px 0;
+  animation: reward-fly-in 520ms var(--ease) 40ms both;
+}
+
+.reward__wing {
+  transform-box: fill-box;
+  transform-origin: 90% 40%;
+  animation: reward-flap 180ms ease-in-out 60ms 4 alternate;
+}
+
+@keyframes reward-fly-in {
+  from {
+    opacity: 0;
+    transform: translate(-36px, 10px) rotate(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes reward-flap {
+  from {
+    transform: none;
+  }
+  to {
+    transform: rotate(-38deg);
+  }
+}
+
 @keyframes reward-in {
   from {
     opacity: 0;
@@ -1151,7 +1185,9 @@ textarea {
 @media (prefers-reduced-motion: reduce) {
   .reward__badge,
   .reward__icon,
-  .reward__label {
+  .reward__label,
+  .reward--pigeon .reward__icon,
+  .reward__wing {
     animation: none;
   }
 

@@ -46,6 +46,15 @@ describe('work survey (combined)', () => {
     expect(workSurvey.sections).toHaveLength(9);
   });
 
+  it.each([
+    [['Email', 'Verbal, drive-by, or carrier pigeon'], 'pigeon', 'Message received'],
+    [['Email'], 'continuous', 'Past halfway'],
+  ])('sends a pigeon after the intake page when Q6 includes carrier pigeon: %j', (q4, icon, label) => {
+    const intake = workSurvey.sections.find((s) => s.id === 'intake')!;
+    const reward = typeof intake.reward === 'function' ? intake.reward({ q4 }) : intake.reward;
+    expect(reward).toEqual({ icon, label });
+  });
+
   it('derives both the place count and the license', () => {
     const { q1: _dropped, ...rest } = completeAnswers();
     expect(workSurvey.derive?.({ ...rest, ...grids })).toEqual({ q4_placeCount: 3, license: 'Light' });
