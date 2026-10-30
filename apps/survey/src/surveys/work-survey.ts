@@ -128,6 +128,11 @@ export const survey: Survey = {
       ...sectionOf(workflow, 'assets'),
       reward: { icon: 'thumbsUp', label: 'One section left' },
     },
-    sectionOf(workflow, 'open'),
+    {
+      ...sectionOf(workflow, 'open'),
+      questions: questionsOf(workflow, 'open').map((q) =>
+        q.id === 'q17' ? reworded(q, 'What is the single biggest thing that slows down work for you?') : q,
+      ),
+    },
   ],
 };

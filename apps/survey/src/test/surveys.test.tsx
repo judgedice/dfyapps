@@ -98,6 +98,14 @@ describe('work survey (combined)', () => {
     ]);
   });
 
+  it('asks question 20 as "What is the single biggest thing that slows down work for you?"', () => {
+    const numbered = workSurvey.sections.flatMap((s) => s.questions).filter((q) => q.type !== 'checkbox');
+    expect(numbered[19]).toMatchObject({
+      id: 'q17',
+      prompt: 'What is the single biggest thing that slows down work for you?',
+    });
+  });
+
   it('asks question 2 as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });
