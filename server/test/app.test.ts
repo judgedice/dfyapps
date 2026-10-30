@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { completeAnswers } from '../../apps/workflow-survey/src/test/answers.fixture';
+import { completeAnswers } from '../../apps/survey/src/test/answers.fixture';
 import { createApp } from '../src/app';
 import { FileStore } from '../src/store';
 
@@ -197,5 +197,77 @@ describe('GET /workflow-survey/api/export.csv', () => {
   it('is not served when no password is configured', async () => {
     const open = createApp({ store: new FileStore(root), publicDir: root });
     expect((await request(open).get('/workflow-survey/api/export.csv')).status).toBe(404);
+  });
+});
+
+describe('how you work survey', () => {
+  const never = {
+    yourWork: { markDone: 'Never', logHours: 'Never', followWork: 'Never' },
+    planning: { createTasks: 'Never', createProjects: 'Never' },
+    requests: { sendRequests: 'Never', handleRequests: 'Never' },
+    decisions: { approveWork: 'Never', approveFiles: 'Never', approveTime: 'Never' },
+  };
+  const post = (answers: Record<string, unknown>) =>
+    request(app).post('/how-you-work/api/responses').send({ respondentId: 'hyw1', answers });
+
+  it('saves the response with the license tier derived on the server', async () => {
+    await post({ ...never, requests: { sendRequests: 'Every week', handleRequests: 'Never' } }).expect(201);
+    const dir = path.join(root, 'responses', 'how-you-work');
+    const [name] = await readdir(dir);
+    const saved = JSON.parse(await readFile(path.join(dir, name), 'utf8'));
+    expect(saved.answers.requests).toEqual({ sendRequests: 'Every week', handleRequests: 'Never' });
+    expect(saved.derived).toEqual({ license: 'Contributor' });
+  });
+
+  it('requires every activity', async () => {
+    const res = await post({ ...never, decisions: { approveWork: 'Never' } });
+    expect(res.status).toBe(422);
+    expect(res.body.fields).toHaveProperty('decisions');
+  });
+
+  it('exports its own CSV with a column per activity and the license last', async () => {
+    await post(never).expect(201);
+    await request(app).post('/workflow-survey/api/responses').send(submission()).expect(201);
+
+    const res = await request(app).get('/how-you-work/api/export.csv').auth('dfy', 'secret');
+    const [cols, row, extra] = parseCsv(res.text.slice(1));
+    expect(cols).toEqual([
+      'respondentId', 'submittedAt', 'receivedAt',
+      'yourWork.markDone', 'yourWork.logHours', 'yourWork.followWork',
+      'planning.createTasks', 'planning.createProjects',
+      'requests.sendRequests', 'requests.handleRequests',
+      'decisions.approveWork', 'decisions.approveFiles', 'decisions.approveTime',
+      'license',
+    ]);
+    expect(row[cols.indexOf('license')]).toBe('External');
+    expect(extra).toBeUndefined();
+  });
+
+  it('redirects the bare path and keeps the respondent ID', async () => {
+    const res = await request(app).get('/how-you-work?r=hyw1');
+    expect(res.headers.location).toBe('/how-you-work/?r=hyw1');
+  });
+});
+
+describe('work survey (combined)', () => {
+  it('saves both derived values and exports the activity grids alongside the workflow answers', async () => {
+    const { q1: _dropped, ...rest } = completeAnswers();
+    const answers = {
+      ...rest,
+      yourWork: { markDone: 'Every week', logHours: 'Never', followWork: 'Never' },
+      planning: { createTasks: 'Never', createProjects: 'Never' },
+      requests: { sendRequests: 'Never', handleRequests: 'Never' },
+      decisions: { approveWork: 'Never', approveFiles: 'Never', approveTime: 'Never' },
+    };
+    await request(app).post('/work-survey/api/responses').send({ respondentId: 'w1', answers }).expect(201);
+
+    const res = await request(app).get('/work-survey/api/export.csv').auth('dfy', 'secret');
+    const [cols, row] = parseCsv(res.text.slice(1));
+    expect(cols).toContain('yourWork.markDone');
+    expect(cols).toContain('requests.handleRequests');
+    expect(cols).toContain('q3.finding');
+    expect(cols).not.toContain('q1.execute');
+    expect(cols.slice(-2)).toEqual(['q4_placeCount', 'license']);
+    expect(row.slice(-2)).toEqual(['3', 'Standard']);
   });
 });

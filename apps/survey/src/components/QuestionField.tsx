@@ -37,13 +37,16 @@ export function fieldIds(questionId: string) {
     field: `field-${questionId}`,
     legend: `legend-${questionId}`,
     hint: `hint-${questionId}`,
+    examples: `examples-${questionId}`,
     error: `error-${questionId}`,
   };
 }
 
-export function describedBy(questionId: string, hasHint: boolean, hasError: boolean, extra?: string) {
-  const ids = fieldIds(questionId);
-  const parts = [hasHint && ids.hint, hasError && ids.error, extra].filter(Boolean);
+export function describedBy(question: Question, hasError: boolean) {
+  const ids = fieldIds(question.id);
+  const parts = [question.examples?.length && ids.examples, question.hint && ids.hint, hasError && ids.error].filter(
+    Boolean,
+  );
   return parts.length ? parts.join(' ') : undefined;
 }
 
@@ -67,7 +70,7 @@ export function QuestionFrame({ question, number, error, optional, role, footer,
       role={role}
       aria-required={role === 'radiogroup' ? true : undefined}
       aria-invalid={role === 'radiogroup' && error ? true : undefined}
-      aria-describedby={describedBy(question.id, Boolean(question.hint), Boolean(error))}
+      aria-describedby={describedBy(question, Boolean(error))}
     >
       <legend id={ids.legend} className="question__legend">
         <span className="question__number">{number}.</span>
@@ -76,6 +79,13 @@ export function QuestionFrame({ question, number, error, optional, role, footer,
           {optional && <span className="question__optional"> (optional)</span>}
         </span>
       </legend>
+      {question.examples && question.examples.length > 0 && (
+        <ul id={ids.examples} className="question__examples">
+          {question.examples.map((example) => (
+            <li key={example}>{example}</li>
+          ))}
+        </ul>
+      )}
       {question.hint && (
         <p id={ids.hint} className="question__hint">
           {question.hint}

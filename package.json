@@ -3,9 +3,9 @@
   "private": true,
   "description": "Small DFY apps served from dfy.work",
   "scripts": {
-    "setup": "npm ci --prefix apps/workflow-survey && npm ci --prefix server",
-    "test": "npm test --prefix apps/workflow-survey && npm test --prefix server",
-    "typecheck": "npm run typecheck --prefix apps/workflow-survey && npm run typecheck --prefix server",
+    "setup": "npm ci --prefix apps/survey && npm ci --prefix server",
+    "test": "npm test --prefix apps/survey && npm test --prefix server",
+    "typecheck": "npm run typecheck --prefix apps/survey && npm run typecheck --prefix server",
     "build": "sh scripts/build.sh",
     "start": "cd build && RESPONSES_DIR=../data/responses node --enable-source-maps server.cjs"
   }

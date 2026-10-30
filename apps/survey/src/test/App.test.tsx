@@ -1,8 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import App from '../App';
+import AppComponent from '../App';
+import { survey } from '../surveys/workflow-survey';
+import type { ComponentProps } from 'react';
 import { completeAnswers, seedProgress, setRespondent, STORAGE_PREFIX } from './fixtures';
+
+const App = (props: Partial<ComponentProps<typeof AppComponent>>) => <AppComponent survey={survey} {...props} />;
 
 const sectionHeading = () => screen.getByRole('heading', { level: 2 });
 const nextButton = () => screen.getByRole('button', { name: 'Next' });

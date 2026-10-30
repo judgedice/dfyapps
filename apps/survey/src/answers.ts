@@ -1,4 +1,4 @@
-import type { AllocationQuestion, Question, Survey } from './survey';
+import type { AllocationQuestion, Question, Section, Survey } from './survey';
 
 export type MatrixAnswer = Record<string, string>;
 export type AllocationAnswer = Record<string, number>;
@@ -9,7 +9,12 @@ export interface Submission {
   respondentId: string;
   submittedAt: string;
   answers: Record<string, AnswerValue>;
-  derived: { q4_placeCount: number };
+  derived: Record<string, string | number>;
+}
+
+/** Sections the respondent sees, given their answers so far. */
+export function visibleSections(s: Survey, answers: Answers): Section[] {
+  return s.sections.filter((section) => !section.showIf || section.showIf(answers));
 }
 
 /** Key that holds the free text for a multi question's "Other" option. */
@@ -64,7 +69,7 @@ export function validateQuestions(questions: Question[], answers: Answers): Reco
   return errors;
 }
 
-/** Builds the submission payload, keeping only answers defined in the survey. */
+/** Builds the submission payload, keeping only answers to questions the respondent was shown. */
 export function buildSubmission(
   s: Survey,
   respondentId: string,
@@ -72,7 +77,7 @@ export function buildSubmission(
   now: Date = new Date(),
 ): Submission {
   const out: Record<string, AnswerValue> = {};
-  for (const q of s.sections.flatMap((section) => section.questions)) {
+  for (const q of visibleSections(s, answers).flatMap((section) => section.questions)) {
     const value = answers[q.id];
     switch (q.type) {
       case 'single':
@@ -107,11 +112,10 @@ export function buildSubmission(
     }
   }
 
-  const q4 = out.q4;
   return {
     respondentId,
     submittedAt: now.toISOString(),
     answers: out,
-    derived: { q4_placeCount: Array.isArray(q4) ? q4.length : 0 },
+    derived: s.derive?.(out) ?? {},
   };
 }
