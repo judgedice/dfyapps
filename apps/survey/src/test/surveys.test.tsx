@@ -98,6 +98,10 @@ describe('work survey (combined)', () => {
     ]);
   });
 
+  it('asks question 2 as "How often do you plan work?"', () => {
+    expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
+  });
+
   it('asks question 9 as "How frequently do you work with requests?"', () => {
     const intake = workSurvey.sections.find((s) => s.id === 'intake')!;
     expect(intake.questions.find((q) => q.id === 'requests')?.prompt).toBe(

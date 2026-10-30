@@ -85,7 +85,7 @@ export const survey: Survey = {
       title: 'Planning and decisions',
       reward: { icon: 'workflow', label: 'Nice work' },
       questions: [
-        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work like this?')),
+        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work?')),
         license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
         license({ id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' }),
       ],
