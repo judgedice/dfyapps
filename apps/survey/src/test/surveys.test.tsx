@@ -46,6 +46,22 @@ describe('work survey (combined)', () => {
     expect(workSurvey.sections).toHaveLength(9);
   });
 
+  it('words the time allocation options for this survey', () => {
+    const q = workSurvey.sections[3].questions[0];
+    expect(q.type).toBe('allocation');
+    if (q.type !== 'allocation') return;
+    expect(q.items.map((i) => [i.id, i.label, i.description])).toEqual([
+      ['finding', 'Finding the work', expect.any(String)],
+      ['doing', 'Doing the work', expect.any(String)],
+      [
+        'preparing',
+        'Planning the work',
+        'Clarifying scope, gathering inputs, organizing your approach, finding assignees, and meetings',
+      ],
+      ['overhead', 'Overhead', 'Things like status updates and timeline management'],
+    ]);
+  });
+
   it('derives both the place count and the license', () => {
     const { q1: _dropped, ...rest } = completeAnswers();
     expect(workSurvey.derive?.({ ...rest, ...grids })).toEqual({ q4_placeCount: 3, license: 'Light' });
