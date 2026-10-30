@@ -6,7 +6,8 @@
 // `q4_placeCount` and `license`.
 //
 // Questions that feed the license are highlighted in DFY orange. Logging hours is a single
-// "I log hours" checkbox above Next rather than a grid row.
+// "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
+// under the decisions grid; it's saved as `usesProof` but doesn't change the license.
 import type { MatrixQuestion, Question, Section, Survey } from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
@@ -51,6 +52,7 @@ export const survey: Survey = {
       questions: [
         license(reworded(only(howYouWork, 'planning'), 'How often do you plan work like this?')),
         license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
+        license({ id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' }),
       ],
     },
     {

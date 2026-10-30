@@ -59,7 +59,13 @@ describe('work survey (combined)', () => {
 
   it('highlights exactly the questions that feed the license', () => {
     const highlighted = workSurvey.sections.flatMap((s) => s.questions.filter((q) => q.highlight).map((q) => q.id));
-    expect(highlighted).toEqual(['yourWork', 'logsHours', 'planning', 'decisions', 'requests']);
+    expect(highlighted).toEqual(['yourWork', 'logsHours', 'planning', 'decisions', 'usesProof', 'requests']);
+  });
+
+  it('asks "I use Workfront Proof" as a checkbox under the decisions grid', () => {
+    const ids = workSurvey.sections[1].questions.map((q) => q.id);
+    expect(ids).toEqual(['planning', 'decisions', 'usesProof']);
+    expect(workSurvey.sections[1].questions[2]).toMatchObject({ type: 'checkbox', prompt: 'I use Workfront Proof' });
   });
 
   it.each([
