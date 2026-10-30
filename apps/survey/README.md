@@ -6,6 +6,7 @@ Single-page surveys built with Vite, React, and TypeScript. Respondents see one 
 | --- | --- | --- |
 | Task and workflow survey | `workflow-survey` | `src/surveys/workflow-survey.ts` |
 | How you work | `how-you-work` | `src/surveys/how-you-work.ts` |
+| Work and workflow survey | `work-survey` | `src/surveys/work-survey.ts` |
 
 Set `VITE_SURVEY` to the id to choose which one `npm run dev` or `npm run build` uses. It defaults to `workflow-survey`.
 
@@ -118,6 +119,12 @@ The tiers nest (External < Contributor < Light < Standard), and the highest tier
 | Send a request asking someone else to do work | Contributor |
 | Approve or reject tasks or projects | Contributor |
 | None of these | External |
+
+## Work and workflow survey
+
+Both surveys in one, nine sections. The How you work activity grids replace the workflow survey's first section (execute, review, plan), and the request activities join the intake section. It reuses the question definitions from both survey files, so edits there carry over. It saves both `q4_placeCount` and `license`.
+
+Every survey shows a reward between pages; a test fails if a section other than the last one has no `reward`.
 
 ## Edit the questions
 

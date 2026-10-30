@@ -248,3 +248,26 @@ describe('how you work survey', () => {
     expect(res.headers.location).toBe('/how-you-work/?r=hyw1');
   });
 });
+
+describe('work survey (combined)', () => {
+  it('saves both derived values and exports the activity grids alongside the workflow answers', async () => {
+    const { q1: _dropped, ...rest } = completeAnswers();
+    const answers = {
+      ...rest,
+      yourWork: { markDone: 'Every week', logHours: 'Never', followWork: 'Never' },
+      planning: { createTasks: 'Never', createProjects: 'Never' },
+      requests: { sendRequests: 'Never', handleRequests: 'Never' },
+      decisions: { approveWork: 'Never', approveFiles: 'Never', approveTime: 'Never' },
+    };
+    await request(app).post('/work-survey/api/responses').send({ respondentId: 'w1', answers }).expect(201);
+
+    const res = await request(app).get('/work-survey/api/export.csv').auth('dfy', 'secret');
+    const [cols, row] = parseCsv(res.text.slice(1));
+    expect(cols).toContain('yourWork.markDone');
+    expect(cols).toContain('requests.handleRequests');
+    expect(cols).toContain('q3.finding');
+    expect(cols).not.toContain('q1.execute');
+    expect(cols.slice(-2)).toEqual(['q4_placeCount', 'license']);
+    expect(row.slice(-2)).toEqual(['3', 'Standard']);
+  });
+});

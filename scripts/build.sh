@@ -6,7 +6,7 @@ set -eu
 cd "$(dirname "$0")/.."
 
 # Every survey in apps/survey/src/surveys/. Add new ids here too.
-SURVEYS="workflow-survey how-you-work"
+SURVEYS="workflow-survey how-you-work work-survey"
 
 rm -rf build
 mkdir -p build/public
