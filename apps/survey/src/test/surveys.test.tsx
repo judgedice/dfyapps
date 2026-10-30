@@ -147,6 +147,15 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
+  it('words the duration questions to the respondent', () => {
+    const duration = workSurvey.sections.find((s) => s.id === 'duration')!;
+    expect(duration.questions.map((q) => q.prompt)).toEqual([
+      'On average, how long does a single task take for you in hands-on time?',
+      'How much calendar time passes between receiving a task and completing it?',
+      'How many other people do your tasks typically depend on?',
+    ]);
+  });
+
   it('asks the planning question (now question 3) as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });

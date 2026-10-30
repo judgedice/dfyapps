@@ -45,6 +45,11 @@ function largestShare(answers: Answers): string | undefined {
   return top.length === 1 ? top[0][0] : undefined;
 }
 
+const DURATION_WORDING: Record<string, string> = {
+  q7: 'On average, how long does a single task take for you in hands-on time?',
+  q9: 'How many other people do your tasks typically depend on?',
+};
+
 /** True when every row of a How you work grid is answered Every week or Every month. */
 function allMonthlyOrMore(answers: Answers, questionId: string): boolean {
   const grid = only(howYouWork, questionId) as MatrixQuestion;
@@ -155,6 +160,10 @@ export const survey: Survey = {
     {
       ...sectionOf(workflow, 'duration'),
       reward: { icon: 'layers', label: 'Going strong' },
+      // Worded to the respondent ("for you", "your tasks").
+      questions: questionsOf(workflow, 'duration').map((q) =>
+        q.id in DURATION_WORDING ? reworded(q, DURATION_WORDING[q.id]) : q,
+      ),
     },
     {
       ...sectionOf(workflow, 'rework'),
