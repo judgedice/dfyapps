@@ -9,6 +9,8 @@ interface BaseQuestion {
   hint?: string;
   /** Optional bulleted examples shown under the prompt, to make a question concrete. */
   examples?: string[];
+  /** Mark the question in DFY orange, e.g. to flag the questions that feed a derived result. */
+  highlight?: boolean;
 }
 
 export interface SingleQuestion extends BaseQuestion {
@@ -37,6 +39,11 @@ export interface AllocationQuestion extends BaseQuestion {
   items: { id: string; label: string; description?: string }[];
 }
 
+/** A single optional checkbox, shown without a number. `prompt` is its label. Saved as true or false. */
+export interface CheckboxQuestion extends BaseQuestion {
+  type: 'checkbox';
+}
+
 export interface TextQuestion extends BaseQuestion {
   type: 'text';
   maxLength: number;
@@ -47,7 +54,11 @@ export type Question =
   | MultiQuestion
   | MatrixQuestion
   | AllocationQuestion
+  | CheckboxQuestion
   | TextQuestion;
+
+/** Checkboxes sit beside other questions rather than counting as numbered questions of their own. */
+export const isNumbered = (q: Question) => q.type !== 'checkbox';
 
 /** Line icons available for section rewards. See src/components/Reward.tsx. */
 export type RewardIcon =
