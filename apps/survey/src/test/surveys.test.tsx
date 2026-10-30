@@ -135,6 +135,18 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
+  it.each([
+    [{ finding: 40, doing: 30, preparing: 20, overhead: 10 }, 'sleuth', 'Work sleuth'],
+    [{ finding: 10, doing: 60, preparing: 20, overhead: 10 }, 'horse', 'Workhorse'],
+    [{ finding: 10, doing: 20, preparing: 50, overhead: 20 }, 'planner', 'Master planner'],
+    [{ finding: 10, doing: 20, preparing: 20, overhead: 50 }, 'sisyphus', 'Sisyphus'],
+    [{ finding: 10, doing: 40, preparing: 10, overhead: 40 }, 'strategy', 'Right on target'],
+  ])('celebrates the time allocation page after the largest share: %j', (q3, icon, label) => {
+    const time = workSurvey.sections.find((s) => s.id === 'time')!;
+    const reward = typeof time.reward === 'function' ? time.reward({ q3 }) : time.reward;
+    expect(reward).toEqual({ icon, label });
+  });
+
   it('asks the planning question (now question 3) as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });

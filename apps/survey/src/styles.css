@@ -1134,6 +1134,62 @@ textarea {
   }
 }
 
+/* The sleuth's magnifier searches side to side. */
+.reward__search {
+  animation: reward-search 900ms ease-in-out 200ms both;
+}
+
+/* The workhorse nods twice. */
+.reward__nod {
+  transform-box: view-box;
+  transform-origin: 9px 21px;
+  animation: reward-nod 360ms ease-in-out 300ms 2 alternate;
+}
+
+/* Sisyphus gets the boulder partway up, then it rolls back. */
+.reward__push {
+  animation: reward-push 1100ms ease-in-out 200ms both;
+}
+
+.reward--sisyphus .reward__icon,
+.reward--horse .reward__icon {
+  width: 60px;
+  height: 60px;
+  margin: -6px 0;
+}
+
+@keyframes reward-search {
+  0%,
+  100% {
+    transform: none;
+  }
+  30% {
+    transform: translate(-2px, 1px);
+  }
+  65% {
+    transform: translate(2px, -1px);
+  }
+}
+
+@keyframes reward-nod {
+  from {
+    transform: none;
+  }
+  to {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes reward-push {
+  0%,
+  100% {
+    transform: none;
+  }
+  55% {
+    transform: translate(2.8px, -1.15px);
+  }
+}
+
 /* The clock's hand sweeps once around. */
 .reward__hand {
   transform-box: view-box;
@@ -1254,6 +1310,9 @@ textarea {
   .reward--pigeon .reward__icon,
   .reward--bee .reward__icon,
   .reward__loupe,
+  .reward__search,
+  .reward__nod,
+  .reward__push,
   .reward__hand,
   .reward__wing {
     animation: none;

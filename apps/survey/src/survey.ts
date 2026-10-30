@@ -78,7 +78,10 @@ export type RewardIcon =
   | 'bee'
   | 'approved'
   | 'proof'
-  | 'planner';
+  | 'planner'
+  | 'sleuth'
+  | 'horse'
+  | 'sisyphus';
 
 export interface SectionReward {
   icon: RewardIcon;

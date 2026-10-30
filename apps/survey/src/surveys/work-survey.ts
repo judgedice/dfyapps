@@ -37,6 +37,14 @@ const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
 
+/** The time allocation item with the largest share, or undefined if there's a tie for the top. */
+function largestShare(answers: Answers): string | undefined {
+  const shares = Object.entries((answers.q3 ?? {}) as Record<string, number>);
+  const max = Math.max(...shares.map(([, v]) => v));
+  const top = shares.filter(([, v]) => v === max);
+  return top.length === 1 ? top[0][0] : undefined;
+}
+
 /** True when every row of a How you work grid is answered Every week or Every month. */
 function allMonthlyOrMore(answers: Answers, questionId: string): boolean {
   const grid = only(howYouWork, questionId) as MatrixQuestion;
@@ -116,7 +124,15 @@ export const survey: Survey = {
     },
     {
       ...sectionOf(workflow, 'time'),
-      reward: { icon: 'strategy', label: 'Right on target' },
+      // Named after where most of the week goes. A tie for the top spot gets the usual reward.
+      reward: (answers) => {
+        const top = largestShare(answers);
+        if (top === 'finding') return { icon: 'sleuth', label: 'Work sleuth' };
+        if (top === 'doing') return { icon: 'horse', label: 'Workhorse' };
+        if (top === 'preparing') return { icon: 'planner', label: 'Master planner' };
+        if (top === 'overhead') return { icon: 'sisyphus', label: 'Sisyphus' };
+        return { icon: 'strategy', label: 'Right on target' };
+      },
       questions: [
         {
           ...timeAllocation,

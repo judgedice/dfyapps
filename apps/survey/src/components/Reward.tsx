@@ -94,6 +94,33 @@ const icons: Record<RewardIcon, ReactNode> = {
       <path d="m8.5 11 1.3 1.3 2.2-2.3M14 11h2M8.5 16l1.3 1.3 2.2-2.3M14 16h2" />
     </>
   ),
+  // A magnifying glass that searches side to side.
+  sleuth: (
+    <g className="reward__search">
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="m15 15 5.5 5.5" />
+      <path d="M8 8.2a3.3 3.3 0 0 1 2.5-1" />
+    </g>
+  ),
+  // A horse's head that nods, for the workhorse.
+  horse: (
+    <g className="reward__nod">
+      <path d="M6.5 21c0-6 .3-11 2.5-14.5l-.4-3 2.4 1.7c2.5.1 5 1.8 7 4.8l1.6 2.6c.4.8-.1 1.8-1 1.8h-1.9c-1.1 0-1.9-.6-2.5-1.4-1 1.8-1.4 4.5-1.2 8" />
+      <circle cx="13.2" cy="8.6" r=".55" fill="currentColor" stroke="none" />
+      <path d="M8.6 9.5 6.4 10.4M8.1 12.6l-2.2.7M7.9 15.7l-2.1.5" />
+    </g>
+  ),
+  // Sisyphus pushes a boulder up the slope, and it rolls back down.
+  sisyphus: (
+    <>
+      <path d="M1 22 23 13" />
+      <g className="reward__push">
+        <circle cx="14.6" cy="11.9" r="3.8" />
+        <circle cx="8.4" cy="9.9" r="1.4" />
+        <path d="M9.5 12.2 7.6 15.7l-2.4 4.4M7.6 15.7l.8 3.4M9.5 12.4l1.3.4" />
+      </g>
+    </>
+  ),
   // A bee that buzzes in place.
   bee: (
     <>
