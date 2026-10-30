@@ -16,6 +16,7 @@ import type {
   SingleQuestion,
   Survey,
 } from '../survey';
+import type { Answers } from '../answers';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -35,6 +36,13 @@ const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
+
+/** True when every row of a How you work grid is answered Every week or Every month. */
+function allMonthlyOrMore(answers: Answers, questionId: string): boolean {
+  const grid = only(howYouWork, questionId) as MatrixQuestion;
+  const value = (answers[questionId] ?? {}) as Record<string, string>;
+  return grid.rows.every((r) => value[r.id] === 'Every week' || value[r.id] === 'Every month');
+}
 
 // Time allocation, with this survey's own wording for the last two options. Item ids stay the same
 // as the workflow survey's so the CSV columns line up.
@@ -84,22 +92,27 @@ export const survey: Survey = {
       },
       questions: [
         license({ ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') }),
+        // Volume ("How many tasks do you typically handle?") lives here rather than on its own page.
+        ...questionsOf(workflow, 'volume'),
         license({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' }),
       ],
     },
     {
       id: 'planning-decisions',
       title: 'Planning and decisions',
-      reward: { icon: 'workflow', label: 'Nice work' },
+      // First match wins: Proof users, then regular approvers (whatever their planning answers),
+      // then regular planners, otherwise the usual reward.
+      reward: (answers) => {
+        if (answers.usesProof === true) return { icon: 'proof', label: 'Proof master' };
+        if (allMonthlyOrMore(answers, 'decisions')) return { icon: 'approved', label: 'Approved' };
+        if (allMonthlyOrMore(answers, 'planning')) return { icon: 'planner', label: 'Master planner' };
+        return { icon: 'workflow', label: 'Nice work' };
+      },
       questions: [
         license(reworded(only(howYouWork, 'planning'), 'How often do you plan work?')),
         license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
         license({ id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' }),
       ],
-    },
-    {
-      ...sectionOf(workflow, 'volume'),
-      reward: { icon: 'analytics', label: 'Keep it going' },
     },
     {
       ...sectionOf(workflow, 'time'),

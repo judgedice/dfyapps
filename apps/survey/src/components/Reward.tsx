@@ -68,6 +68,32 @@ const icons: Record<RewardIcon, ReactNode> = {
       <path className="reward__hand" d="M12 7v5l3.2 2" />
     </>
   ),
+  // A check mark that draws itself inside a circle.
+  approved: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path className="reward__draw" pathLength={1} d="m8 12.3 2.8 2.8L16.3 9.5" />
+    </>
+  ),
+  // A document with a magnifier that sweeps across it.
+  proof: (
+    <>
+      <path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21H12M14 3l4 4v3M14 3v4h4" />
+      <path d="M8 9h3M8 12.5h2.5" />
+      <g className="reward__loupe">
+        <circle cx="16.5" cy="15.5" r="3" />
+        <path d="m18.7 17.7 2.3 2.3" />
+      </g>
+    </>
+  ),
+  // A clipboard checklist.
+  planner: (
+    <>
+      <rect x="5" y="4.5" width="14" height="16.5" rx="2" />
+      <path d="M9 3h6v3H9z" />
+      <path d="m8.5 11 1.3 1.3 2.2-2.3M14 11h2M8.5 16l1.3 1.3 2.2-2.3M14 16h2" />
+    </>
+  ),
   // A bee that buzzes in place.
   bee: (
     <>

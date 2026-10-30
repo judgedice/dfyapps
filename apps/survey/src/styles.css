@@ -1104,6 +1104,36 @@ textarea {
     reward-buzz 90ms linear 400ms 6 alternate;
 }
 
+/* The approved check mark draws itself. */
+.reward__draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: reward-draw 420ms var(--ease) 260ms forwards;
+}
+
+/* The proof loupe sweeps in from the upper left. */
+.reward__loupe {
+  animation: reward-scan 640ms var(--ease) 160ms both;
+}
+
+@keyframes reward-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes reward-scan {
+  from {
+    transform: translate(-6px, -7px);
+  }
+  60% {
+    transform: translate(1px, 1px);
+  }
+  to {
+    transform: none;
+  }
+}
+
 /* The clock's hand sweeps once around. */
 .reward__hand {
   transform-box: view-box;
@@ -1223,9 +1253,15 @@ textarea {
   .reward__label,
   .reward--pigeon .reward__icon,
   .reward--bee .reward__icon,
+  .reward__loupe,
   .reward__hand,
   .reward__wing {
     animation: none;
+  }
+
+  .reward__draw {
+    animation: none;
+    stroke-dashoffset: 0;
   }
 
   .reward__ring,

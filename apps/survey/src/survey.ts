@@ -75,7 +75,10 @@ export type RewardIcon =
   | 'visibility'
   | 'pigeon'
   | 'clock'
-  | 'bee';
+  | 'bee'
+  | 'approved'
+  | 'proof'
+  | 'planner';
 
 export interface SectionReward {
   icon: RewardIcon;

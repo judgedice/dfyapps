@@ -41,9 +41,10 @@ describe('work survey (combined)', () => {
   it('replaces the old first section with the activity grids', () => {
     const ids = workSurvey.sections.flatMap((s) => s.questions.map((q) => q.id));
     expect(ids).not.toContain('q1');
-    expect(ids.slice(0, 4)).toEqual(['yourWork', 'logsHours', 'planning', 'decisions']);
+    expect(ids.slice(0, 5)).toEqual(['yourWork', 'q2', 'logsHours', 'planning', 'decisions']);
     expect(ids).toContain('requests');
-    expect(workSurvey.sections).toHaveLength(9);
+    expect(workSurvey.sections).toHaveLength(8);
+    expect(workSurvey.sections.map((s) => s.id)).not.toContain('volume');
   });
 
   it('offers Same day, Days, Other (fill in), and It varies for how long missing information takes', () => {
@@ -65,7 +66,7 @@ describe('work survey (combined)', () => {
 
   it('shows the fill-in only when Other is picked', async () => {
     const user = userEvent.setup();
-    window.localStorage.setItem('work-survey:all1', JSON.stringify({ answers: {}, step: 4 }));
+    window.localStorage.setItem('work-survey:all1', JSON.stringify({ answers: {}, step: 3 }));
     render(<App survey={workSurvey} />);
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Notification and intake');
     expect(screen.queryByRole('textbox', { name: 'How long does it usually take?' })).not.toBeInTheDocument();
@@ -83,7 +84,7 @@ describe('work survey (combined)', () => {
   });
 
   it('words the time allocation options for this survey', () => {
-    const q = workSurvey.sections[3].questions[0];
+    const q = workSurvey.sections[2].questions[0];
     expect(q.type).toBe('allocation');
     if (q.type !== 'allocation') return;
     expect(q.items.map((i) => [i.id, i.label, i.description])).toEqual([
@@ -119,7 +120,22 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
-  it('asks question 2 as "How often do you plan work?"', () => {
+  const plan = (v: string) => ({ createTasks: v, createProjects: v });
+  const decide = (v: string) => ({ approveWork: v, approveFiles: v, approveTime: v });
+  it.each([
+    [{ usesProof: true, planning: plan('Every week'), decisions: decide('Every week') }, 'proof', 'Proof master'],
+    [{ usesProof: false, planning: plan('Never'), decisions: decide('Every month') }, 'approved', 'Approved'],
+    [{ planning: plan('Every week'), decisions: decide('Every week') }, 'approved', 'Approved'],
+    [{ planning: plan('Every month'), decisions: decide('Never') }, 'planner', 'Master planner'],
+    [{ planning: plan('Every week'), decisions: { ...decide('Every week'), approveTime: 'Less often' } }, 'planner', 'Master planner'],
+    [{ planning: { createTasks: 'Every week', createProjects: 'Less often' }, decisions: decide('Never') }, 'workflow', 'Nice work'],
+  ])('celebrates section 2 based on the answers: %j', (answers, icon, label) => {
+    const second = workSurvey.sections[1];
+    const reward = typeof second.reward === 'function' ? second.reward(answers) : second.reward;
+    expect(reward).toEqual({ icon, label });
+  });
+
+  it('asks the planning question (now question 3) as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });
 
@@ -136,8 +152,11 @@ describe('work survey (combined)', () => {
   });
 
   it('asks about logging hours with a checkbox instead of a grid row', () => {
-    const [grid, checkbox] = workSurvey.sections[0].questions;
+    const [grid, volume, checkbox] = workSurvey.sections[0].questions;
     expect(grid.type === 'matrix' && grid.rows.map((r) => r.id)).toEqual(['markDone', 'followWork']);
+    // Section 1 has two numbered questions: the activity grid and the volume question.
+    expect(volume).toMatchObject({ id: 'q2', prompt: 'How many tasks do you typically handle?' });
+    // The checkbox stays last, directly above Next.
     expect(checkbox).toMatchObject({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' });
   });
 
@@ -182,19 +201,21 @@ describe('work survey (combined)', () => {
 
     await user.click(checkbox);
     for (const row of screen.getAllByRole('row').filter((r) => r.querySelector('input'))) {
-      await user.click(row.querySelector<HTMLInputElement>('input[value="Never"]')!);
+      const inputs = row.querySelectorAll<HTMLInputElement>('input');
+      await user.click(inputs[inputs.length - 1]);
     }
     await user.click(next);
-    // The checkbox doesn't take a question number: page 2 starts at question 2.
-    expect(screen.getAllByText('2.')[0]).toBeInTheDocument();
-    expect(screen.queryByText('3.', { selector: '.question__number' })).toBeInTheDocument();
+    // The checkbox doesn't take a question number: page 1 holds questions 1 and 2, page 2 starts at 3.
+    const numbers = [...document.querySelectorAll('.question__number')].map((n) => n.textContent);
+    expect(numbers).toEqual(['3.', '4.']);
   });
 
   it('shows a reward after the first page', async () => {
     const user = userEvent.setup();
     render(<App survey={workSurvey} />);
     for (const row of screen.getAllByRole('row').filter((r) => r.querySelector('input'))) {
-      await user.click(row.querySelector<HTMLInputElement>('input[value="Never"]')!);
+      const inputs = row.querySelectorAll<HTMLInputElement>('input');
+      await user.click(inputs[inputs.length - 1]);
     }
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('Planning and decisions');
