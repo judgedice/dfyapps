@@ -98,6 +98,13 @@ describe('work survey (combined)', () => {
     ]);
   });
 
+  it('asks question 9 as "How frequently do you work with requests?"', () => {
+    const intake = workSurvey.sections.find((s) => s.id === 'intake')!;
+    expect(intake.questions.find((q) => q.id === 'requests')?.prompt).toBe(
+      'How frequently do you work with requests?',
+    );
+  });
+
   it('derives both the place count and the license', () => {
     const { q1: _dropped, ...rest } = completeAnswers();
     expect(workSurvey.derive?.({ ...rest, ...grids })).toEqual({ q4_placeCount: 3, license: 'Light' });

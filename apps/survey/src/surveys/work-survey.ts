@@ -113,7 +113,7 @@ export const survey: Survey = {
           : { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...intakeQuestions,
-        license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),
+        license(reworded(only(howYouWork, 'requests'), 'How frequently do you work with requests?')),
       ],
     },
     {
