@@ -16,6 +16,10 @@ interface BaseQuestion {
 export interface SingleQuestion extends BaseQuestion {
   type: 'single';
   options: string[];
+  /** Option that reveals a required fill-in field. Its text is saved as `<id>_other`. */
+  otherOption?: string;
+  /** Label for the fill-in field. Defaults to `Describe “<otherOption>”`. */
+  otherPrompt?: string;
 }
 
 export interface MultiQuestion extends BaseQuestion {

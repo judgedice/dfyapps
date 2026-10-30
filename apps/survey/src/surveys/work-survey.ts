@@ -8,7 +8,7 @@
 // Questions that feed the license are highlighted in DFY orange. Logging hours is a single
 // "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
 // under the decisions grid; it's saved as `usesProof` but doesn't change the license.
-import type { MatrixQuestion, Question, Section, Survey } from '../survey';
+import type { MatrixQuestion, Question, Section, SingleQuestion, Survey } from '../survey';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
 
@@ -28,6 +28,19 @@ const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
+
+// "When information is missing, how long does it take to get it?" (q6) gets broader options here,
+// with a fill-in for anything else.
+const intakeQuestions = questionsOf(workflow, 'intake').map((q): Question =>
+  q.id === 'q6'
+    ? ({
+        ...(q as SingleQuestion),
+        options: ['Same day', 'Days', 'Other', 'It varies'],
+        otherOption: 'Other',
+        otherPrompt: 'How long does it usually take?',
+      } satisfies SingleQuestion)
+    : q,
+);
 
 export const survey: Survey = {
   id: 'work-survey',
@@ -67,7 +80,7 @@ export const survey: Survey = {
       ...sectionOf(workflow, 'intake'),
       reward: { icon: 'continuous', label: 'Past halfway' },
       questions: [
-        ...questionsOf(workflow, 'intake'),
+        ...intakeQuestions,
         license(reworded(only(howYouWork, 'requests'), 'How often do you handle requests like these?')),
       ],
     },
