@@ -61,6 +61,78 @@ const icons: Record<RewardIcon, ReactNode> = {
       <path d="m19.1 7.6 2 1.4 1.9-1.4" />
     </>
   ),
+  // The hand sweeps once around the clock face.
+  clock: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path className="reward__hand" d="M12 7v5l3.2 2" />
+    </>
+  ),
+  // A check mark that draws itself inside a circle.
+  approved: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path className="reward__draw" pathLength={1} d="m8 12.3 2.8 2.8L16.3 9.5" />
+    </>
+  ),
+  // A document with a magnifier that sweeps across it.
+  proof: (
+    <>
+      <path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21H12M14 3l4 4v3M14 3v4h4" />
+      <path d="M8 9h3M8 12.5h2.5" />
+      <g className="reward__loupe">
+        <circle cx="16.5" cy="15.5" r="3" />
+        <path d="m18.7 17.7 2.3 2.3" />
+      </g>
+    </>
+  ),
+  // A clipboard checklist.
+  planner: (
+    <>
+      <rect x="5" y="4.5" width="14" height="16.5" rx="2" />
+      <path d="M9 3h6v3H9z" />
+      <path d="m8.5 11 1.3 1.3 2.2-2.3M14 11h2M8.5 16l1.3 1.3 2.2-2.3M14 16h2" />
+    </>
+  ),
+  // A magnifying glass that searches side to side.
+  sleuth: (
+    <g className="reward__search">
+      <circle cx="10.5" cy="10.5" r="6" />
+      <path d="m15 15 5.5 5.5" />
+      <path d="M8 8.2a3.3 3.3 0 0 1 2.5-1" />
+    </g>
+  ),
+  // A horse's head that nods, for the workhorse.
+  horse: (
+    <g className="reward__nod">
+      <path d="M6.5 21c0-6 .3-11 2.5-14.5l-.4-3 2.4 1.7c2.5.1 5 1.8 7 4.8l1.6 2.6c.4.8-.1 1.8-1 1.8h-1.9c-1.1 0-1.9-.6-2.5-1.4-1 1.8-1.4 4.5-1.2 8" />
+      <circle cx="13.2" cy="8.6" r=".55" fill="currentColor" stroke="none" />
+      <path d="M8.6 9.5 6.4 10.4M8.1 12.6l-2.2.7M7.9 15.7l-2.1.5" />
+    </g>
+  ),
+  // Sisyphus pushes a boulder up the slope, and it rolls back down.
+  sisyphus: (
+    <>
+      <path d="M1 22 23 13" />
+      <g className="reward__push">
+        <circle cx="14.6" cy="11.9" r="3.8" />
+        <circle cx="8.4" cy="9.9" r="1.4" />
+        <path d="M9.5 12.2 7.6 15.7l-2.4 4.4M7.6 15.7l.8 3.4M9.5 12.4l1.3.4" />
+      </g>
+    </>
+  ),
+  // A bee that buzzes in place.
+  bee: (
+    <>
+      <ellipse cx="10.5" cy="14.5" rx="6" ry="4.3" />
+      <path d="M8.6 10.5v8M12 10.3v8.4" />
+      <circle cx="18.3" cy="13.4" r="2" />
+      <path d="M19.2 11.6l1.3-2.4M17.6 11.5l-.4-2.5" />
+      <path d="M4.5 14.6 2.4 15" />
+      <path d="M9.6 10.3C7 9.5 5.8 7 7.2 5.6s4 .3 4.2 3.2" />
+      <path d="M11.6 10.2c.4-2.8 2.4-4.5 4.1-3.6s1 3.6-1.6 4.6" />
+    </>
+  ),
   visibility: (
     <>
       <rect x="2" y="3" width="20" height="14" rx="2" />
