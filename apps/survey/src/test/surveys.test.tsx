@@ -147,6 +147,23 @@ describe('work survey (combined)', () => {
     expect(reward).toEqual({ icon, label });
   });
 
+  it('asks question 13 about a typical task/document', () => {
+    const numbered = workSurvey.sections.flatMap((s) => s.questions).filter((q) => q.type !== 'checkbox');
+    expect(numbered[12]).toMatchObject({
+      id: 'q10',
+      prompt: 'How many rounds of review and approval does a typical task/document go through?',
+    });
+  });
+
+  it('words the duration questions to the respondent', () => {
+    const duration = workSurvey.sections.find((s) => s.id === 'duration')!;
+    expect(duration.questions.map((q) => q.prompt)).toEqual([
+      'On average, how long does a single task take for you in hands-on time?',
+      'How much calendar time passes between receiving a task and completing it?',
+      'How many other people do your tasks typically depend on?',
+    ]);
+  });
+
   it('asks the planning question (now question 3) as "How often do you plan work?"', () => {
     expect(workSurvey.sections[1].questions[0].prompt).toBe('How often do you plan work?');
   });
