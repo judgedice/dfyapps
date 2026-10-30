@@ -5,8 +5,7 @@
 // both surveys, so edits there carry over here. Saves both surveys' derived values:
 // `q4_placeCount` and `license`.
 //
-// Questions that feed the license are highlighted in DFY orange. Logging hours is a single
-// "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
+// Logging hours is a single "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
 // under the decisions grid; it's saved as `usesProof`, and a checked box means at least Light.
 import type {
   AllocationQuestion,
@@ -31,9 +30,6 @@ const questionsOf = (s: Survey, id: string): Question[] => sectionOf(s, id).ques
 /** Same question, new wording, for pages that show more than one grid. */
 const reworded = (q: Question, prompt: string): Question => ({ ...q, prompt });
 const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
-
-/** Marks a question as feeding the license, shown in DFY orange. */
-const license = (q: Question): Question => ({ ...q, highlight: true });
 
 const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
 
@@ -104,10 +100,10 @@ export const survey: Survey = {
         return { icon: 'thumbsUp', label: 'Hey, thanks' };
       },
       questions: [
-        license({ ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') }),
+        { ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') },
         // Volume ("How many tasks do you typically handle?") lives here rather than on its own page.
         ...questionsOf(workflow, 'volume'),
-        license({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' }),
+        { id: 'logsHours', type: 'checkbox', prompt: 'I log hours' },
       ],
     },
     {
@@ -122,9 +118,9 @@ export const survey: Survey = {
         return { icon: 'workflow', label: 'Nice work' };
       },
       questions: [
-        license(reworded(only(howYouWork, 'planning'), 'How often do you plan work?')),
-        license(reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?')),
-        license({ id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' }),
+        reworded(only(howYouWork, 'planning'), 'How often do you plan work?'),
+        reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?'),
+        { id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' },
       ],
     },
     {
@@ -154,7 +150,7 @@ export const survey: Survey = {
           : { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...intakeQuestions,
-        license(reworded(only(howYouWork, 'requests'), 'How frequently do you work with requests?')),
+        reworded(only(howYouWork, 'requests'), 'How frequently do you work with requests?'),
       ],
     },
     {

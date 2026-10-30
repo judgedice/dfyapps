@@ -189,9 +189,9 @@ describe('work survey (combined)', () => {
     expect(checkbox).toMatchObject({ id: 'logsHours', type: 'checkbox', prompt: 'I log hours' });
   });
 
-  it('highlights exactly the questions that feed the license', () => {
+  it('highlights no questions', () => {
     const highlighted = workSurvey.sections.flatMap((s) => s.questions.filter((q) => q.highlight).map((q) => q.id));
-    expect(highlighted).toEqual(['yourWork', 'logsHours', 'planning', 'decisions', 'usesProof', 'requests']);
+    expect(highlighted).toEqual([]);
   });
 
   it('asks "I use Workfront Proof" as a checkbox under the decisions grid', () => {
@@ -226,7 +226,6 @@ describe('work survey (combined)', () => {
     const checkbox = screen.getByRole('checkbox', { name: 'I log hours' });
     const next = screen.getByRole('button', { name: 'Next' });
     expect(checkbox.compareDocumentPosition(next) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(checkbox.closest('.question--highlight')).not.toBeNull();
 
     await user.click(checkbox);
     for (const row of screen.getAllByRole('row').filter((r) => r.querySelector('input'))) {

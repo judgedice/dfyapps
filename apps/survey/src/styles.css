@@ -301,7 +301,7 @@ legend {
   float: left;
   width: 100%;
   display: flex;
-  gap: 8px;
+  gap: 0.35em;
   padding: 0;
   margin-bottom: 14px;
   font-size: 1.125rem;
@@ -316,7 +316,6 @@ legend {
 
 .question__number {
   flex: none;
-  min-width: 1.75em;
   color: var(--color-accent-text);
   font-variant-numeric: tabular-nums;
 }
