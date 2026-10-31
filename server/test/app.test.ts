@@ -50,9 +50,9 @@ const savedFiles = async () => {
 
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'dfyapps-'));
-  await mkdir(path.join(root, 'public', 'workflow-survey', 'assets'), { recursive: true });
-  await writeFile(path.join(root, 'public', 'workflow-survey', 'index.html'), '<!doctype html><title>Survey</title>');
-  await writeFile(path.join(root, 'public', 'workflow-survey', 'assets', 'index-abc.js'), 'console.log(1)');
+  await mkdir(path.join(root, 'public', 'work-survey', 'assets'), { recursive: true });
+  await writeFile(path.join(root, 'public', 'work-survey', 'index.html'), '<!doctype html><title>Survey</title>');
+  await writeFile(path.join(root, 'public', 'work-survey', 'assets', 'index-abc.js'), 'console.log(1)');
   app = createApp({
     store: new FileStore(path.join(root, 'responses')),
     publicDir: path.join(root, 'public'),
@@ -68,20 +68,29 @@ afterEach(async () => {
 
 describe('static app', () => {
   it('redirects to the trailing-slash URL and keeps the respondent ID', async () => {
-    const res = await request(app).get('/workflow-survey?r=abc123');
+    const res = await request(app).get('/work-survey?r=abc123');
     expect(res.status).toBe(301);
-    expect(res.headers.location).toBe('/workflow-survey/?r=abc123');
+    expect(res.headers.location).toBe('/work-survey/?r=abc123');
+  });
+
+  it('sends the retired workflow survey page to the combined survey, keeping the respondent ID', async () => {
+    for (const url of ['/workflow-survey?r=abc123', '/workflow-survey/?r=abc123']) {
+      const res = await request(app).get(url);
+      expect(res.status).toBe(302);
+      expect(res.headers.location).toBe('/work-survey/?r=abc123');
+    }
+    expect((await request(app).get('/workflow-survey/')).headers.location).toBe('/work-survey/');
   });
 
   it('serves the page uncached and assets as immutable, with security headers', async () => {
-    const page = await request(app).get('/workflow-survey/?r=abc123');
+    const page = await request(app).get('/work-survey/?r=abc123');
     expect(page.status).toBe(200);
     expect(page.text).toContain('<title>Survey</title>');
     expect(page.headers['cache-control']).toBe('no-cache');
     expect(page.headers['referrer-policy']).toBe('no-referrer');
     expect(page.headers['content-security-policy']).toContain("default-src 'self'");
 
-    const asset = await request(app).get('/workflow-survey/assets/index-abc.js');
+    const asset = await request(app).get('/work-survey/assets/index-abc.js');
     expect(asset.headers['cache-control']).toContain('immutable');
   });
 
@@ -233,10 +242,10 @@ describe('how you work survey', () => {
     const [cols, row, extra] = parseCsv(res.text.slice(1));
     expect(cols).toEqual([
       'respondentId', 'submittedAt', 'receivedAt',
-      'yourWork.markDone', 'yourWork.logHours', 'yourWork.followWork',
+      'yourWork.markDone', 'yourWork.followWork', 'logsHours',
       'planning.createTasks', 'planning.createProjects',
+      'decisions.approveWork', 'decisions.approveFiles', 'decisions.approveTime', 'usesProof',
       'requests.sendRequests', 'requests.handleRequests',
-      'decisions.approveWork', 'decisions.approveFiles', 'decisions.approveTime',
       'license',
     ]);
     expect(row[cols.indexOf('license')]).toBe('External');

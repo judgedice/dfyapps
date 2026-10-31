@@ -4,11 +4,12 @@ Single-page surveys built with Vite, React, and TypeScript. Respondents see one 
 
 | Survey | Id and URL path | File |
 | --- | --- | --- |
-| Task and workflow survey | `workflow-survey` | `src/surveys/workflow-survey.ts` |
-| How you work | `how-you-work` | `src/surveys/how-you-work.ts` |
-| Work and workflow survey | `work-survey` | `src/surveys/work-survey.ts` |
+| How you work (license questions only) | `how-you-work` | `src/surveys/how-you-work.ts` |
+| Work and workflow survey (license and workflow questions) | `work-survey` | `src/surveys/work-survey.ts` |
 
-Set `VITE_SURVEY` to the id to choose which one `npm run dev` or `npm run build` uses. It defaults to `workflow-survey`.
+`src/surveys/workflow-survey.ts` holds the original workflow-only survey. It's no longer published, but the combined survey takes most of its questions from it. It's listed in `retiredSurveys` in `src/surveys/index.ts`, so the server redirects its page to the combined survey and keeps its CSV export.
+
+Set `VITE_SURVEY` to the id to choose which one `npm run dev` or `npm run build` uses. It defaults to `work-survey`.
 
 ## Run it
 
@@ -97,11 +98,11 @@ Answer shapes by question type:
 | `allocation` | Object of item ID to a whole number; the values total 100 |
 | `text` | Trimmed string, omitted when left blank |
 
-`derived` holds values each survey computes at submit time with its `derive` function: `q4_placeCount` for the workflow survey, `license` for How you work.
+`derived` holds values each survey computes at submit time with its `derive` function: `license` for both surveys, plus `q4_placeCount` for the combined survey.
 
 ## How you work survey
 
-Four sections ask how often someone does everyday activities: their own tasks, planning, requests, and decisions. It never names a tool. Behind the scenes, `licenseFor` in `src/surveys/how-you-work.ts` maps the answers to a work management license tier, saved as `derived.license`. Respondents don't see it.
+Three pages ask how often someone does everyday activities: their own tasks (plus an **I log hours** checkbox), planning and decisions (plus an **I use Workfront Proof** checkbox), and requests. The combined survey reuses these pages and questions, so the two stay in step. Behind the scenes, `licenseFor` in `src/surveys/how-you-work.ts` maps the answers to a work management license tier, saved as `derived.license`. Respondents don't see it.
 
 The tiers nest (External < Contributor < Light < Standard), and the highest tier any activity needs wins. Any answer other than **Never** counts, except approving files, which needs Light only at **Every week** or **Every month**.
 
@@ -111,7 +112,8 @@ The tiers nest (External < Contributor < Light < Standard), and the highest tier
 | Create tasks for yourself or others | Standard |
 | Set up new projects | Standard |
 | Respond to requests that others send you | Standard |
-| Log the hours you worked | Light |
+| I log hours (checked) | Light |
+| I use Workfront Proof (checked) | Light |
 | Approve the hours other people logged | Light |
 | Approve or reject files, weekly or monthly | Light |
 | Approve or reject files, less often | Contributor |
@@ -122,9 +124,9 @@ The tiers nest (External < Contributor < Light < Standard), and the highest tier
 
 ## Work and workflow survey
 
-Both surveys in one, nine sections. The How you work activity grids replace the workflow survey's first section (execute, review, plan), and the request activities join the intake section. It reuses the question definitions from both survey files, so edits there carry over. It saves both `q4_placeCount` and `license`.
+Eight sections. The first two are How you work's first two pages, with the volume question added to the first. How you work's requests grid joins the intake section. The rest comes from the retired workflow survey, with some wording changed for this survey. It saves both `q4_placeCount` and `license`.
 
-In the first section, logging hours is a single **I log hours** checkbox above **Next** instead of a grid row. It's saved as `logsHours` (true or false), and a checked box counts as weekly for the license. Under the decisions grid, an **I use Workfront Proof** checkbox is saved as `usesProof`; checking it means at least Light.
+**I log hours** (`logsHours`) and **I use Workfront Proof** (`usesProof`) are saved as true or false; either one checked means at least Light.
 
 After the intake page, anyone who chose carrier pigeon in that section's first question gets a carrier pigeon with a note in its beak ("Message received") instead of the usual reward. A section's `reward` can be a function of the answers for cases like this.
 

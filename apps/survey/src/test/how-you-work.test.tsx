@@ -6,13 +6,14 @@ import type { Answers } from '../answers';
 import { licenseFor, survey } from '../surveys/how-you-work';
 import { setRespondent } from './fixtures';
 
-/** Every activity answered "Never", with overrides by row id. */
-function answers(overrides: Record<string, string> = {}): Answers {
+/** Every activity answered "Never" and both checkboxes unchecked, with overrides by row or checkbox id. */
+function answers(overrides: Record<string, string | boolean> = {}): Answers {
   const out: Answers = {};
-  for (const section of survey.sections) {
-    for (const q of section.questions) {
-      if (q.type !== 'matrix') continue;
-      out[q.id] = Object.fromEntries(q.rows.map((r) => [r.id, overrides[r.id] ?? 'Never']));
+  for (const q of survey.sections.flatMap((s) => s.questions)) {
+    if (q.type === 'matrix') {
+      out[q.id] = Object.fromEntries(q.rows.map((r) => [r.id, (overrides[r.id] as string) ?? 'Never']));
+    } else if (q.type === 'checkbox') {
+      out[q.id] = overrides[q.id] === true;
     }
   }
   return out;
@@ -32,13 +33,14 @@ describe('licenseFor', () => {
     [{ approveWork: 'Every month' }, 'Contributor'],
     [{ approveFiles: 'Less often' }, 'Contributor'],
     [{ approveFiles: 'Every month' }, 'Light'],
-    [{ logHours: 'Less often' }, 'Light'],
+    [{ logsHours: true }, 'Light'],
+    [{ usesProof: true }, 'Light'],
     [{ approveTime: 'Every week' }, 'Light'],
     [{ markDone: 'Less often' }, 'Standard'],
     [{ createTasks: 'Every month' }, 'Standard'],
     [{ createProjects: 'Less often' }, 'Standard'],
     [{ handleRequests: 'Every week' }, 'Standard'],
-    [{ handleRequests: 'Every week', logHours: 'Every week', sendRequests: 'Every week' }, 'Standard'],
+    [{ handleRequests: 'Every week', logsHours: true, sendRequests: 'Every week' }, 'Standard'],
   ])('%j → %s', (overrides, license) => {
     expect(licenseFor(answers(overrides))).toBe(license);
   });
@@ -49,33 +51,50 @@ describe('licenseFor', () => {
 });
 
 describe('how you work survey', () => {
-  it('never names a tool or asks about dashboards', () => {
-    const text = JSON.stringify(survey);
+  it('asks the license questions on three pages, with checkboxes for hours and Proof', () => {
+    expect(survey.sections.map((s) => s.questions.map((q) => q.id))).toEqual([
+      ['yourWork', 'logsHours'],
+      ['planning', 'decisions', 'usesProof'],
+      ['requests'],
+    ]);
+  });
+
+  it('names no tool except Workfront Proof, and never asks about dashboards or licenses', () => {
+    const text = JSON.stringify(survey).replace(/Workfront Proof/g, '');
     expect(text).not.toMatch(/workfront|dashboard|license/i);
   });
 
-  it('runs four sections with rewards and submits the derived license', async () => {
+  it('celebrates between pages based on the answers, and submits the derived license', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 201 }));
     vi.stubGlobal('fetch', fetchMock);
     render(<App survey={survey} submitUrl="/how-you-work/api/responses" />);
 
-    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '4');
-    const rewards: string[] = [];
-    for (let i = 0; i < survey.sections.length; i++) {
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '3');
+    const neverEverywhere = async () => {
       for (const row of screen.getAllByRole('row').filter((r) => r.querySelector('input'))) {
-        const choice = i === 0 && row.textContent?.includes('Log the hours') ? 'Every week' : 'Never';
-        await user.click(row.querySelector<HTMLInputElement>(`input[value="${choice}"]`)!);
+        await user.click(row.querySelector<HTMLInputElement>('input[value="Never"]')!);
       }
-      const last = i === survey.sections.length - 1;
-      await user.click(screen.getByRole('button', { name: last ? 'Submit' : 'Next' }));
-      if (!last) rewards.push(screen.getAllByRole('status').map((s) => s.textContent).join(''));
-    }
+    };
+    const status = () => screen.getAllByRole('status').map((s) => s.textContent).join('');
+
+    await neverEverywhere();
+    await user.click(screen.getByRole('checkbox', { name: 'I log hours' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(status()).toBe('Timekeeper');
+
+    await neverEverywhere();
+    await user.click(screen.getByRole('checkbox', { name: 'I use Workfront Proof' }));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(status()).toBe('Proof master');
+
+    await neverEverywhere();
+    await user.click(screen.getByRole('button', { name: 'Submit' }));
     await screen.findByRole('heading', { name: 'Thank you' });
 
-    expect(rewards).toEqual(['Great job', 'Nice work', 'One section left']);
     const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
-    expect(body.answers.yourWork).toEqual({ markDone: 'Never', logHours: 'Every week', followWork: 'Never' });
+    expect(body.answers.yourWork).toEqual({ markDone: 'Never', followWork: 'Never' });
+    expect(body.answers).toMatchObject({ logsHours: true, usesProof: true });
     expect(body.derived).toEqual({ license: 'Light' });
   });
 

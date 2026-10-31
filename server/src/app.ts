@@ -3,7 +3,7 @@ import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import { buildSubmission, validateQuestions, visibleSections, type Answers } from '../../apps/survey/src/answers';
 import type { Survey } from '../../apps/survey/src/survey';
-import { surveys as allSurveys } from '../../apps/survey/src/surveys';
+import { surveys as allSurveys, retiredSurveys } from '../../apps/survey/src/surveys';
 import { toCsv } from './csv';
 import type { ResponseStore } from './store';
 
@@ -19,6 +19,8 @@ export interface AppOptions {
   rateLimitPerMinute?: number;
   /** Surveys to serve, each at `/<id>/`. Defaults to every survey in apps/survey/src/surveys. */
   surveys?: Survey[];
+  /** Unpublished surveys: submit and export still work, and the page redirects to `redirectTo`. */
+  retired?: { survey: Survey; redirectTo: string }[];
 }
 
 const MAX_ID_LENGTH = 128;
@@ -78,19 +80,26 @@ interface MountOptions {
   publicDir: string;
   exportPassword?: string;
   limiter: ReturnType<typeof rateLimit>;
+  /** For a retired survey: the survey id whose page visitors are sent to instead. */
+  redirectTo?: string;
 }
 
 /** Serves one survey at `/<id>/`, with its submit and export endpoints. */
 function mountSurvey(app: express.Express, survey: Survey, options: MountOptions) {
-  const { store, publicDir, exportPassword, limiter } = options;
+  const { store, publicDir, exportPassword, limiter, redirectTo } = options;
   const APP = survey.id;
   const BASE = `/${APP}`;
 
-  // Relative asset paths need the trailing slash. Keep the query string so `?r=` survives.
-  app.get(BASE, (req, res, next) => {
-    // Express matches `/<id>/` here too; only redirect the bare path.
-    if (!req.originalUrl.startsWith(`${BASE}?`) && req.originalUrl !== BASE) return next();
-    res.redirect(301, `${BASE}/${req.originalUrl.slice(BASE.length)}`);
+  // Keep the query string on every redirect so `?r=` survives.
+  app.get([BASE, `${BASE}/`], (req, res, next) => {
+    const q = req.originalUrl.indexOf('?');
+    const pathOnly = q >= 0 ? req.originalUrl.slice(0, q) : req.originalUrl;
+    const query = q >= 0 ? req.originalUrl.slice(q) : '';
+    // A retired survey's page sends people to its replacement.
+    if (redirectTo) return res.redirect(302, `/${redirectTo}/${query}`);
+    // Relative asset paths need the trailing slash. Express matches `/<id>/` here too.
+    if (pathOnly !== BASE) return next();
+    res.redirect(301, `${BASE}/${query}`);
   });
 
   app.post(
@@ -152,6 +161,8 @@ function mountSurvey(app: express.Express, survey: Survey, options: MountOptions
     });
   }
 
+  if (redirectTo) return;
+
   app.use(
     BASE,
     express.static(path.join(publicDir, APP), {
@@ -176,6 +187,7 @@ export function createApp(options: AppOptions) {
     version = 'dev',
     rateLimitPerMinute = 10,
     surveys: surveyList = Object.values(allSurveys),
+    retired = retiredSurveys,
   } = options;
   const app = express();
   // Azure Container Apps puts one proxy in front of the app; trust it for the client IP.
@@ -189,6 +201,9 @@ export function createApp(options: AppOptions) {
 
   const limiter = rateLimit(rateLimitPerMinute);
   for (const survey of surveyList) mountSurvey(app, survey, { store, publicDir, exportPassword, limiter });
+  for (const { survey, redirectTo } of retired) {
+    mountSurvey(app, survey, { store, publicDir, exportPassword, limiter, redirectTo });
+  }
 
   app.use((_req, res) => {
     res.status(404).type('text/plain').send('Not found.');
