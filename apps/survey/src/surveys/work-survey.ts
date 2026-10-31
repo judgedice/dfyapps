@@ -1,20 +1,11 @@
 // Work survey, served at dfy.work/work-survey/: How you work and the workflow survey in one.
 //
-// The activity grids from How you work replace the workflow survey's first section (execute,
-// review, plan), and its request questions join the intake section. Questions are reused from
-// both surveys, so edits there carry over here. Saves both surveys' derived values:
-// `q4_placeCount` and `license`.
-//
-// Logging hours is a single "I log hours" checkbox above Next rather than a grid row. "I use Workfront Proof" is a checkbox
-// under the decisions grid; it's saved as `usesProof`, and a checked box means at least Light.
-import type {
-  AllocationQuestion,
-  MatrixQuestion,
-  Question,
-  Section,
-  SingleQuestion,
-  Survey,
-} from '../survey';
+// The license questions from How you work (its first two pages, with their celebrations) replace
+// the workflow survey's first section, and its requests grid joins the intake section. Questions
+// are reused from both surveys, so edits there carry over here. Saves both surveys' derived
+// values: `q4_placeCount` and `license`. The workflow survey itself is no longer published; it's
+// the source for the rest of this survey's questions.
+import type { AllocationQuestion, Question, Section, SingleQuestion, Survey } from '../survey';
 import type { Answers } from '../answers';
 import { survey as howYouWork } from './how-you-work';
 import { survey as workflow } from './workflow-survey';
@@ -31,8 +22,6 @@ const questionsOf = (s: Survey, id: string): Question[] => sectionOf(s, id).ques
 const reworded = (q: Question, prompt: string): Question => ({ ...q, prompt });
 const only = (s: Survey, id: string): Question => questionsOf(s, id)[0];
 
-const yourWork = only(howYouWork, 'your-work') as MatrixQuestion;
-
 /** The time allocation item with the largest share, or undefined if there's a tie for the top. */
 function largestShare(answers: Answers): string | undefined {
   const shares = Object.entries((answers.q3 ?? {}) as Record<string, number>);
@@ -45,13 +34,6 @@ const DURATION_WORDING: Record<string, string> = {
   q7: 'On average, how long does a single task take for you in hands-on time?',
   q9: 'How many other people do your tasks typically depend on?',
 };
-
-/** True when every row of a How you work grid is answered Every week or Every month. */
-function allMonthlyOrMore(answers: Answers, questionId: string): boolean {
-  const grid = only(howYouWork, questionId) as MatrixQuestion;
-  const value = (answers[questionId] ?? {}) as Record<string, string>;
-  return grid.rows.every((r) => value[r.id] === 'Every week' || value[r.id] === 'Every month');
-}
 
 // Time allocation, with this survey's own wording for the last two options. Item ids stay the same
 // as the workflow survey's so the CSV columns line up.
@@ -89,40 +71,14 @@ export const survey: Survey = {
   derive: (answers) => ({ ...workflow.derive?.(answers), ...howYouWork.derive?.(answers) }),
   sections: [
     {
-      id: 'your-work',
-      title: 'Your own work',
-      // Timekeeper for people who log hours, Busy bee for weekly on both activities, otherwise thanks.
-      reward: (answers) => {
-        if (answers.logsHours === true) return { icon: 'clock', label: 'Timekeeper' };
-        const grid = (answers.yourWork ?? {}) as Record<string, string>;
-        const rows = yourWork.rows.filter((r) => r.id !== 'logHours');
-        if (rows.every((r) => grid[r.id] === 'Every week')) return { icon: 'bee', label: 'Busy bee' };
-        return { icon: 'thumbsUp', label: 'Hey, thanks' };
-      },
-      questions: [
-        { ...yourWork, rows: yourWork.rows.filter((r) => r.id !== 'logHours') },
-        // Volume ("How many tasks do you typically handle?") lives here rather than on its own page.
-        ...questionsOf(workflow, 'volume'),
-        { id: 'logsHours', type: 'checkbox', prompt: 'I log hours' },
-      ],
+      // How you work's first page, with the volume question ("How many tasks do you typically
+      // handle?") added between the activity grid and the I log hours checkbox.
+      ...sectionOf(howYouWork, 'your-work'),
+      questions: (([grid, logsHours]) => [grid, ...questionsOf(workflow, 'volume'), logsHours])(
+        questionsOf(howYouWork, 'your-work'),
+      ),
     },
-    {
-      id: 'planning-decisions',
-      title: 'Planning and decisions',
-      // First match wins: Proof users, then regular approvers (whatever their planning answers),
-      // then regular planners, otherwise the usual reward.
-      reward: (answers) => {
-        if (answers.usesProof === true) return { icon: 'proof', label: 'Proof master' };
-        if (allMonthlyOrMore(answers, 'decisions')) return { icon: 'approved', label: 'Approved' };
-        if (allMonthlyOrMore(answers, 'planning')) return { icon: 'planner', label: 'Master planner' };
-        return { icon: 'workflow', label: 'Nice work' };
-      },
-      questions: [
-        reworded(only(howYouWork, 'planning'), 'How often do you plan work?'),
-        reworded(only(howYouWork, 'decisions'), 'How often do you make these decisions?'),
-        { id: 'usesProof', type: 'checkbox', prompt: 'I use Workfront Proof' },
-      ],
-    },
+    sectionOf(howYouWork, 'planning-decisions'),
     {
       ...sectionOf(workflow, 'time'),
       // Named after where most of the week goes. A tie for the top spot gets the usual reward.
@@ -150,7 +106,7 @@ export const survey: Survey = {
           : { icon: 'continuous', label: 'Past halfway' },
       questions: [
         ...intakeQuestions,
-        reworded(only(howYouWork, 'requests'), 'How frequently do you work with requests?'),
+        only(howYouWork, 'requests'),
       ],
     },
     {
