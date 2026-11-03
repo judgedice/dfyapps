@@ -4,7 +4,8 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import { buildSubmission, validateQuestions, visibleSections, type Answers } from '../../apps/survey/src/answers';
 import type { Survey } from '../../apps/survey/src/survey';
 import { surveys as allSurveys, retiredSurveys } from '../../apps/survey/src/surveys';
-import { toCsv } from './csv';
+import { rosterFromCsv, toCsv, type Roster } from './csv';
+import { fileFromMultipart, rosterPage, type RosterStatus } from './rosterPage';
 import type { ResponseStore } from './store';
 
 export interface AppOptions {
@@ -148,17 +149,91 @@ function mountSurvey(app: express.Express, survey: Survey, options: MountOptions
     app.get(`${BASE}/api/export.csv`, requirePassword(exportPassword), async (_req, res, next) => {
       try {
         const records = await store.list(APP);
+        const saved = (await store.readMeta(APP, 'roster')) as { roster?: Roster } | undefined;
         const stamp = new Date().toISOString().slice(0, 10);
         res.set({
           'Content-Type': 'text/csv; charset=utf-8',
           'Content-Disposition': `attachment; filename="${APP}-${stamp}.csv"`,
           'Cache-Control': 'no-store',
         });
-        res.send(toCsv(survey, records));
+        res.send(toCsv(survey, records, saved?.roster ?? {}));
       } catch (err) {
         next(err);
       }
     });
+
+    // Roster upload: adds Department and Role to the export, matched by respondent ID.
+    const ROSTER_PATH = `${BASE}/admin/roster`;
+    const sendPage = async (res: Response, message?: { kind: 'ok' | 'error'; text: string }, status = 200) => {
+      const saved = (await store.readMeta(APP, 'roster')) as RosterStatus | undefined;
+      res
+        .status(status)
+        .set({
+          'Cache-Control': 'no-store',
+          // This page has its own inline styles.
+          'Content-Security-Policy':
+            "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
+        })
+        .type('html')
+        .send(rosterPage({ surveyTitle: survey.title, surveyId: APP, status: saved, message }));
+    };
+
+    app.get(ROSTER_PATH, requirePassword(exportPassword), async (_req, res, next) => {
+      try {
+        await sendPage(res);
+      } catch (err) {
+        next(err);
+      }
+    });
+
+    app.post(
+      ROSTER_PATH,
+      requirePassword(exportPassword),
+      // Basic auth is sent automatically, so refuse posts that come from another site. Browsers say
+      // where a request came from in Sec-Fetch-Site; older ones only send Origin ("null" when the
+      // page sets Referrer-Policy: no-referrer, as these pages do).
+      (req, res, next) => {
+        const site = req.get('sec-fetch-site');
+        const origin = req.get('origin');
+        let foreign = false;
+        if (site) foreign = site !== 'same-origin' && site !== 'none';
+        else if (origin && origin !== 'null') {
+          try {
+            foreign = new URL(origin).host !== req.get('host');
+          } catch {
+            foreign = true;
+          }
+        }
+        if (foreign) return res.status(403).type('text/plain').send('Uploads must come from this site.');
+        next();
+      },
+      express.raw({ type: ['multipart/form-data', 'text/csv', 'text/plain'], limit: '2mb' }),
+      async (req, res, next) => {
+        try {
+          const contentType = req.get('content-type') ?? '';
+          const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);
+          const text = contentType.startsWith('multipart/') ? fileFromMultipart(body, contentType) : body.toString('utf8');
+          if (!text || !text.trim()) return sendPage(res, { kind: 'error', text: 'Choose a CSV file to upload.' }, 400);
+          let parsed;
+          try {
+            parsed = rosterFromCsv(text);
+          } catch (err) {
+            return sendPage(res, { kind: 'error', text: (err as Error).message }, 400);
+          }
+          await store.writeMeta(APP, 'roster', {
+            roster: parsed.roster,
+            people: parsed.people,
+            uploadedAt: new Date().toISOString(),
+          });
+          await sendPage(res, {
+            kind: 'ok',
+            text: `Saved Department and Role for ${parsed.people} ${parsed.people === 1 ? 'person' : 'people'}.`,
+          });
+        } catch (err) {
+          next(err);
+        }
+      },
+    );
   }
 
   if (redirectTo) return;
