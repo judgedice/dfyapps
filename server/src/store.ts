@@ -9,7 +9,14 @@ export interface ResponseStore {
   save(app: string, record: unknown): Promise<string>;
   /** Returns every record saved for an app, oldest first. */
   list(app: string): Promise<unknown[]>;
+  /** Saves a named settings file for an app (e.g. its roster), replacing any earlier one. */
+  writeMeta(app: string, name: string, data: unknown): Promise<void>;
+  /** Reads a named settings file for an app, or undefined if there isn't one. */
+  readMeta(app: string, name: string): Promise<unknown | undefined>;
 }
+
+/** Settings live under `_meta/<app>/`, apart from `<app>/`, so they never appear as responses. */
+const metaPath = (app: string, name: string) => `_meta/${app}/${name}.json`;
 
 /** `2026-10-29T18-30-00-000Z_<uuid>.json`: sorts by time and never collides. */
 function fileName(now: Date): string {
@@ -37,6 +44,20 @@ export class FileStore implements ResponseStore {
       return [];
     }
     return Promise.all(names.map(async (n) => JSON.parse(await readFile(path.join(dir, n), 'utf8'))));
+  }
+
+  async writeMeta(app: string, name: string, data: unknown): Promise<void> {
+    const file = path.join(this.root, metaPath(app, name));
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, JSON.stringify(data, null, 2));
+  }
+
+  async readMeta(app: string, name: string): Promise<unknown | undefined> {
+    try {
+      return JSON.parse(await readFile(path.join(this.root, metaPath(app, name)), 'utf8'));
+    } catch {
+      return undefined;
+    }
   }
 }
 
@@ -70,5 +91,18 @@ export class BlobStore implements ResponseStore {
         return JSON.parse(buffer.toString('utf8'));
       }),
     );
+  }
+
+  async writeMeta(app: string, name: string, data: unknown): Promise<void> {
+    const body = JSON.stringify(data, null, 2);
+    await this.container.getBlockBlobClient(metaPath(app, name)).upload(body, Buffer.byteLength(body), {
+      blobHTTPHeaders: { blobContentType: 'application/json' },
+    });
+  }
+
+  async readMeta(app: string, name: string): Promise<unknown | undefined> {
+    const blob = this.container.getBlobClient(metaPath(app, name));
+    if (!(await blob.exists())) return undefined;
+    return JSON.parse((await blob.downloadToBuffer()).toString('utf8'));
   }
 }

@@ -52,6 +52,14 @@ https://dfy.work/how-you-work/?r=a7k2p9
 
 Use short, meaningless IDs and keep the ID-to-name list in your own spreadsheet. The ID is saved with each response but never shown on screen. In a spreadsheet, `="https://dfy.work/work-survey/?r="&A2` builds the links.
 
+## Add department and role to the export
+
+Upload a roster at `https://dfy.work/<id>/admin/roster` (same password as the export). Use the Roster tab of the planning spreadsheet, [docs/DFY-survey-rollout-plan.xlsx](docs/DFY-survey-rollout-plan.xlsx), saved as **CSV UTF-8**. The export then has **Department** and **Role** columns right after `respondentId`, matched by respondent ID; they're blank for anyone not on the roster.
+
+- Only the respondent ID, department, and role are stored. Names, emails, and other columns are ignored.
+- Uploading again replaces the roster, and the export always uses the latest one, including for earlier responses.
+- The roster is stored at `_meta/<id>/roster.json` in the same storage as the responses.
+
 ## Get the responses
 
 **As a spreadsheet:** open `https://dfy.work/<id>/api/export.csv` (`how-you-work` or `work-survey`, or `workflow-survey` for responses to the retired survey) and enter the export password (any user name). You get one row per response and one column per answer, ready for Excel or Google Sheets.
