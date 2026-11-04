@@ -18,6 +18,8 @@ echo "Using Container Apps environment: $ENV_NAME"
 
 If the resource group has more than one environment, set `ENV_NAME` to the hub's environment by hand.
 
+On a Mac, the default shell is zsh, where `$APP:l` means "lowercase `$APP`". That's why image names below are written as `${APP}:latest` with braces.
+
 ## 2. Create storage for responses
 
 Each response is saved as one JSON file in a private blob container.
@@ -36,67 +38,34 @@ Responses land at `responses/workflow-survey/<timestamp>_<id>.json`.
 
 ## 3. Build the first image
 
-The Container App needs an image to start from. Run this from the repo root:
+The Container App needs an image to start from. A push to `main` builds one, or run this from the repo root:
 
 ```bash
 az acr build --registry $REGISTRY --resource-group $RG \
-  --image $APP:latest --build-arg BUILD_SHA=initial .
+  --image "${APP}:latest" --build-arg BUILD_SHA=initial .
 ```
 
 ## 4. Create the Container App
 
-This mirrors how the hub's MCP broker is created. The export password protects the CSV download; save it in your password manager.
+The export password protects the CSV download; save it in your password manager.
 
 ```bash
 EXPORT_PASSWORD=$(openssl rand -base64 24)
 echo "Export password: $EXPORT_PASSWORD"
 
-ENV_ID=$(az containerapp env show -n "$ENV_NAME" -g $RG --query id -o tsv)
 ACR_PASSWORD=$(az acr credential show -n $REGISTRY --query 'passwords[0].value' -o tsv)
+```
 
-umask 077   # the file holds secrets until it is removed below
-cat > dfyapps.yaml <<EOF
-properties:
-  managedEnvironmentId: $ENV_ID
-  configuration:
-    ingress:
-      external: true
-      targetPort: 8080
-    secrets:
-      - name: acr-registry-password
-        value: "$ACR_PASSWORD"
-      - name: storage-connection
-        value: "$STORAGE_CONNECTION"
-      - name: export-password
-        value: "$EXPORT_PASSWORD"
-    registries:
-      - server: $REGISTRY.azurecr.io
-        username: $REGISTRY
-        passwordSecretRef: acr-registry-password
-  template:
-    containers:
-      - name: dfyapps
-        image: $REGISTRY.azurecr.io/$APP:latest
-        resources:
-          cpu: 0.25
-          memory: 0.5Gi
-        env:
-          - name: AZURE_STORAGE_CONNECTION_STRING
-            secretRef: storage-connection
-          - name: EXPORT_PASSWORD
-            secretRef: export-password
-        probes:
-          - type: Readiness
-            httpGet:
-              path: /health
-              port: 8080
-    scale:
-      minReplicas: 0
-      maxReplicas: 2
-EOF
+This uses plain options rather than `--yaml`: some versions of the `containerapp` CLI extension reject YAML input with a "could not be converted to System.Boolean" error.
 
-az containerapp create -n $APP -g $RG --environment "$ENV_NAME" --yaml dfyapps.yaml
-rm dfyapps.yaml
+```bash
+az containerapp create -n $APP -g $RG --environment "$ENV_NAME" \
+  --image "${REGISTRY}.azurecr.io/${APP}:latest" \
+  --registry-server $REGISTRY.azurecr.io --registry-username $REGISTRY --registry-password "$ACR_PASSWORD" \
+  --ingress external --target-port 8080 \
+  --cpu 0.25 --memory 0.5Gi --min-replicas 0 --max-replicas 2 \
+  --secrets storage-connection="$STORAGE_CONNECTION" export-password="$EXPORT_PASSWORD" \
+  --env-vars AZURE_STORAGE_CONNECTION_STRING=secretref:storage-connection EXPORT_PASSWORD=secretref:export-password
 ```
 
 Check it:
@@ -108,7 +77,7 @@ curl https://$FQDN/health
 
 Then open `https://$FQDN/workflow-survey/` in a browser.
 
-`minReplicas: 0` means the app sleeps when idle and costs almost nothing, but the first visitor after a quiet spell waits a few seconds. While the survey is open, you can keep one replica warm:
+`--min-replicas 0` means the app sleeps when idle and costs almost nothing, but the first visitor after a quiet spell waits a few seconds. While the survey is open, you can keep one replica warm:
 
 ```bash
 az containerapp update -n $APP -g $RG --min-replicas 1
